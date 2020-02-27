@@ -93,7 +93,6 @@ contract CommunityERC20Test {
         );
     }
 
-   
     function shouldOnlyMintTokenOnceForCurrentBatch() public {
         payload = abi.encodeWithSignature(
             "mint(address,uint256)",
@@ -167,18 +166,22 @@ contract CommunityERC20Test {
     }
 
     function upadeBalanceArraySuccessfullyAfterBatchUpdateMint() public {
-        Assert.equal(cerc.getBalanceLength(mainAcc), 2, "Balance array length should be 2");
+        Assert.equal(
+            cerc.getBalanceLength(mainAcc),
+            2,
+            "Balance array length should be 2"
+        );
         mainAccIndex = cerc.findCommunityIndex(mainAcc);
         currentBatch = cerc.getCurrentBatch();
         lastArray = cerc.getLastArrayIndex(mainAcc);
-         Assert.equal(
+        Assert.equal(
             keccak256(abi.encodePacked(lastArray)),
             keccak256(abi.encodePacked([mainAccIndex, currentBatch])),
             "Balance array not correct"
         );
 
     }
-    
+
     function shouldPropertlyUpdateBalanceArrayAfterTransfer() public {
         cerc.transfer(acc2, 10);
         mainAccIndex = cerc.findCommunityIndex(mainAcc);
