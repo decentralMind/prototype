@@ -1,0 +1,1 @@
+Decentralize way to bailout.
