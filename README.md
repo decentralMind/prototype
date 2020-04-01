@@ -1,1 +1,1 @@
-Quack Quack fast and rough prototype.
+Quack Quack fast and rough prototypes.
