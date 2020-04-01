@@ -11,7 +11,7 @@ contract Community {
     mapping(address => bool) registered;
 
     mapping(address => bool) isTrusted;
-
+    
     mapping(address => bool) fullAuthority;
 
     modifier isRegistered(address community) {
@@ -38,6 +38,7 @@ contract Community {
         require(registered[community] == true);
         _;
     }
+    
 
     function addOwner(address newOwner) public {
         owner = newOwner;

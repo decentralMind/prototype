@@ -22,12 +22,13 @@ contract VotingRemoval is Community {
 
     mapping(address => VotingData) redList;
 
-    address[] allRedListed;
+    address[] removalList;
     address[] allRemoved;
 
-
     //Voting open for 5 days.
-    uint256 public removalTimeFrame = 432000;
+    uint public removalTimeFrame = 432000;
+    
+    uint communityNumber = 200;
 
     mapping(address => VotingData) changeTimeFrame;
     //get the current list based one date
@@ -47,6 +48,11 @@ contract VotingRemoval is Community {
     modifier timeFrameRegistered(address openBy) {
         VotingData memory vd = changeTimeFrame[openBy];
         require(vd.isOpen);
+        _;
+    }
+    
+    modifier sufficientCommuintyNumber() {
+        require(trustedCommunity >= 200);
         _;
     }
 
@@ -89,18 +95,29 @@ contract VotingRemoval is Community {
         uint256 newTimeFrame,
         bytes reason
     );
-
+    
+    event CommunityNumberEvent(
+        uint newNumber
+        );
+    
+    function changeCommunityNumber(uint newNumber) external onlyOwner {
+        communityNumber = newNumber;
+        emit CommunityNumberEvent(newNumber);
+    }
+    
+    
     function openVoteTimeFrame(bytes memory reason, uint256 newTimeFrame)
         public
         onlyEligible
         alreadyTimeFrameRegistered
+        sufficientCommuintyNumber
     {
         VotingData storage vd = changeTimeFrame[msg.sender];
         vd.isOpen = true;
         vd.openedBy = msg.sender;
         vd.expiryDate = now + removalTimeFrame;
         vd.totalVote++;
-        vd.voteRequired = calculateVotingRequired();
+        vd.voteRequired = _calculateVotingRequired();
         vd.requestedTimeChange = newTimeFrame;
         vd.reason = reason;
         vd.voted[msg.sender] = true;
@@ -121,6 +138,7 @@ contract VotingRemoval is Community {
         public
         timeFrameRegistered(openedBy)
         onlyEligible
+        sufficientCommuintyNumber
     {
         VotingData storage vd = changeTimeFrame[openedBy];
         // Increaset total vote.
@@ -147,20 +165,21 @@ contract VotingRemoval is Community {
         );
     }
 
-    function addToRedList(address commAdd, bytes memory reason)
+    function addToRemovalList(address commAdd, bytes memory reason)
         public
         onlyEligible
         alreadyListed(commAdd)
+        sufficientCommuintyNumber
     {
         VotingData storage ld = redList[commAdd];
         ld.expiryDate = now + removalTimeFrame;
         ld.openedBy = msg.sender;
         ld.reason = reason;
         ld.isOpen = true;
-        ld.voteRequired = calculateVotingRequired();
+        ld.voteRequired = _calculateVotingRequired();
         ld.voted[msg.sender] = true;
 
-        allRedListed.push(commAdd);
+        removalList.push(commAdd);
         emit RedListEvent(
             msg.sender,
             commAdd,
@@ -170,15 +189,14 @@ contract VotingRemoval is Community {
         );
     }
 
-    function voteForRemoval(address commAdd) public onlyEligible {
+    function voteForCommunityRemoval(address commAdd) public onlyEligible {
         VotingData storage ld = redList[commAdd];
         require(!ld.voted[msg.sender]);
         ld.voted[msg.sender] = true;
         ld.expiryDate = block.timestamp + removalTimeFrame;
         ld.totalVote++;
 
-        //this about the negative here.
-        if (ld.totalVote > ld.voteRequired || ld.totalVote == ld.voteRequired) {
+        if (ld.totalVote >= ld.voteRequired) {
             removeCommunity(commAdd);
             allRemoved.push(commAdd);
         }
@@ -193,17 +211,21 @@ contract VotingRemoval is Community {
             ld.isRemoved
         );
     }
-
-    // function _addStructTotal() private {
-        
-    // }
-
-    function calculateVotingRequired() public view returns (uint256) {
-        return (((trustedCommunity + 1) * 51) / 100) * 100;
+    
+    function _calculateVotingRequired() private view returns (uint) {
+        if(trustedCommunity % 100 == 0) {
+            return _votingAlgorithm();
+        } else {
+            return (_votingAlgorithm() + 1);
+        }
     }
 
-    function allRedListedSize() public view returns (uint256) {
-        return allRedListed.length;
+    function _votingAlgorithm() private view returns(uint) {
+        return trustedCommunity * 51/100;
+    }
+    
+    function removalListSize() public view returns (uint256) {
+        return removalList.length;
     }
 
     function allRemovedSize() public view returns (uint256) {
@@ -211,7 +233,7 @@ contract VotingRemoval is Community {
     }
 
     function getRedListedAddress(uint256 index) public view returns (address) {
-        return allRedListed[index];
+        return removalList[index];
     }
 
     function getAllRemovedAddress(uint256 index) public view returns (address) {
