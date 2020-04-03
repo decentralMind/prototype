@@ -40,7 +40,7 @@ contract Community {
     }
     
 
-    function addOwner(address newOwner) public {
+    function replaceOwner(address newOwner) public {
         owner = newOwner;
     }
 
