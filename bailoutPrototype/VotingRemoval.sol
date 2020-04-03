@@ -2,10 +2,27 @@ pragma solidity ^0.5.0;
 
 import "./Community.sol";
 
-contract VotingRemoval is Community {
-    //Conseus needs to build in every way.
 
-    //get current list of removal community
+contract VotingRemoval is Community {
+    /**
+     * @dev Voitng system for removal of community members and owners
+     * and resetting expiry date of the active voting proposal.
+     *
+     * Once owner is removed, new owner cannot be added, thereafter community
+     * will be incharge of the smart contract.
+     *
+     * Removal process requires 51% voting consensus from communities
+     * regisered as trusted. {_calculateVotingRequired} is responsible to
+     * calculate required number of voters.
+     *
+     * Currently 200 trusted registered communites is set to allow for
+     * voting. This number be change by owner.
+     */
+
+    /**
+     * @dev This is the main data format for voting.
+     * It is used in every voting proposals.
+     */
     struct VotingData {
         bool isOpen;
         bool isRemoved;
@@ -19,89 +36,80 @@ contract VotingRemoval is Community {
         mapping(address => bool) voted;
     }
 
+    // Community removal proposals with address of proposed community to be removed
+    // map to data.
     mapping(address => VotingData) redList;
 
+    // Record the address of proposals.
+    // Will be used to get voting data from {redList} mapping.
     address[] removalList;
+
+    // All community removed address.
     address[] allRemoved;
 
-    //Voting open for 5 days.
+    // Voting open for 5 days.
     uint256 public removalTimeFrame = 432000;
 
+    // Minimum amount of registered community members before
+    // allowing communities to vote.
     uint256 communityNumber = 200;
 
+    // Expiry Date change proposals with address of proposals mapped with voting data.
     mapping(address => VotingData) changeTimeFrame;
-    //get the current list based one date
 
+    // Owner removal proposals with address of proposals mapped with voting data.
     mapping(address => VotingData) ownerRemoval;
 
+    // Records the community address who proposed the removal of owner.
     address[] ownerRemovalList;
 
+    // Set true if owner is successfully removed.
     bool ownerRemoved;
 
+    /**
+     * @dev Throw if current voting proposal is not opened.
+     */
     modifier alreadyListed(address commAdd) {
         VotingData memory vd = redList[commAdd];
-        require(!vd.isOpen);
+        require(
+            !vd.isOpen,
+            "Voting proposal is not open, either it closed or has not been registered"
+        );
         _;
     }
 
-    modifier alreadyTimeFrameRegistered() {
-        VotingData memory vd = changeTimeFrame[msg.sender];
-        require(!vd.isOpen);
-        _;
-    }
-
+    /**
+     * @dev Throw if current expiry date change proposal
+     * by the given community has expired of not open.
+     */
     modifier timeFrameRegistered(address openBy) {
         VotingData memory vd = changeTimeFrame[openBy];
-        require(vd.isOpen);
+        require(
+            vd.isOpen,
+            "Current expiry date change proposal already expired or not registerd"
+        );
         _;
     }
 
+    /**
+     * @dev Throw if minimum total number of required community is not reached.
+     * Community should be registered as trusted.
+     */
     modifier sufficientCommunityNumber() {
-        require(trustedCommunity >= 200);
+        require(
+            trustedCommunity >= 200,
+            "Total number of trusted registered community should be greater than what required"
+        );
         _;
     }
 
-    event RedListEvent(
-        address deployer,
-        address community,
-        uint256 expiryDate,
-        bool isOpen,
-        bytes reason
-    );
-
-    event VotingEvent(
-        address voter,
-        address community,
-        uint256 expiryDate,
-        uint256 totalVote,
-        uint256 votingRequired,
-        bool isOpen,
-        bool isRemoved
-    );
-
-    event TimeFrameEvent(
-        bool isOpen,
-        bool isRemoved,
-        address openedBy,
-        uint256 expiryDate,
-        uint256 totalVote,
-        uint256 voteRequired,
-        uint256 newTimeFrame,
-        bytes reason
-    );
-
-    event ChangeTimeFrameEvent(
-        bool isOpen,
-        bool isRemoved,
-        address openedBy,
-        uint256 expiryDate,
-        uint256 totalVote,
-        uint256 voteRequired,
-        uint256 newTimeFrame,
-        bytes reason
-    );
-
-    event CommunityNumberEvent(uint256 newNumber);
+    /**
+     * @dev Throws if owner is already removed.
+     */
+    modifier isOwnerRemoved() {
+        require(!ownerRemoved, "Owner has been already removed");
+        _;
+    }
 
     event VotingDataEvent(
         bool isOpen,
@@ -114,15 +122,35 @@ contract VotingRemoval is Community {
         bytes reason
     );
 
+    event CommunityNumberEvent(uint256 newNumber);
+
+    /**
+     *@dev Assign `newNumber` of minimum registered communities required before
+     * allowing to open proposals and voting. Communites should be regisitred
+     * as trusted.
+     *
+     * emits a {CommunityNumberEvent}
+     */
     function changeCommunityNumber(uint256 newNumber) external onlyOwner {
         communityNumber = newNumber;
         emit CommunityNumberEvent(newNumber);
     }
 
-    function openVoteTimeFrame(bytes memory reason, uint256 newTimeFrame)
+    /**
+     * @dev Open proposal to reset expiry date to `newTimeFrame`  with
+     * valid `reason`.
+     *
+     * Requirements:
+     * -Communites must be registered as trusted.
+     * -Current proposal creator address should not have other active expiry date
+     *  change proposals.
+     *
+     * emits a {VotingDataEvent}
+     */
+    function openVoteTimeFrame(uint256 newTimeFrame, bytes memory reason)
         public
         onlyEligible
-        alreadyTimeFrameRegistered
+        timeFrameRegistered(msg.sender)
         sufficientCommunityNumber
     {
         VotingData storage vd = changeTimeFrame[msg.sender];
@@ -135,7 +163,7 @@ contract VotingRemoval is Community {
         vd.reason = reason;
         vd.voted[msg.sender] = true;
 
-        emit TimeFrameEvent(
+        emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
             vd.openedBy,
@@ -147,6 +175,16 @@ contract VotingRemoval is Community {
         );
     }
 
+    /**
+     * @dev Vote to reset expiry date proposal `openedBy' given community.
+     *
+     * Requirements:
+     * - Current proposal should be active.
+     * - Sufficient number of community should be presence.
+     * - Only registered trusted communities.
+     *
+     * emits a {VotingDataEvent}.
+     */
     function voteToChangeTimeFrame(address openedBy)
         public
         timeFrameRegistered(openedBy)
@@ -159,14 +197,14 @@ contract VotingRemoval is Community {
         // Registered voted address.
         vd.voted[msg.sender] = true;
 
-        // If number of voting met the target
+        // If number of voting requirements met the target, change time frame.
         if (vd.totalVote >= vd.voteRequired) {
             vd.isOpen = false;
             vd.isRemoved = true;
             removalTimeFrame = vd.requestedTimeChange;
         }
 
-        emit ChangeTimeFrameEvent(
+        emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
             vd.openedBy,
@@ -178,7 +216,16 @@ contract VotingRemoval is Community {
         );
     }
 
-    function addToRemovalList(address commAdd, bytes memory reason)
+    /**
+     * @dev Open proposal to remove communities address `commAdd1` because of 'reason'.
+     * Requirements:
+     * -Only trusted registered communities.
+     * -Should not be already listed for removal.
+     * -Sufficient number of communities should be presence.
+     *
+     * emits a {VotingDataEvent}
+     */
+    function openCommunityRemoval(address commAdd, bytes memory reason)
         public
         onlyEligible
         alreadyListed(commAdd)
@@ -193,66 +240,59 @@ contract VotingRemoval is Community {
         vd.voted[msg.sender] = true;
 
         removalList.push(commAdd);
-        emit RedListEvent(
-            msg.sender,
-            commAdd,
-            vd.expiryDate,
+
+        emit VotingDataEvent(
             vd.isOpen,
+            vd.isRemoved,
+            vd.openedBy,
+            vd.expiryDate,
+            vd.totalVote,
+            vd.voteRequired,
+            vd.requestedTimeChange,
             vd.reason
         );
     }
 
+    /**
+     * @dev Vote for community `commAdd` removal.
+     * Requirements:
+     * - Current proposal must be active and open.
+     * - Sufficient number of communities should be presence.
+     * - Given address can only vote once.
+     *
+     * emits {VotingDataEvent}
+     */
     function voteForCommunityRemoval(address commAdd) public onlyEligible {
         VotingData storage vd = redList[commAdd];
+        require(vd.isOpen);
         require(!vd.voted[msg.sender]);
         vd.voted[msg.sender] = true;
         vd.expiryDate = block.timestamp + removalTimeFrame;
         vd.totalVote++;
 
+        // Remove community memeber if voting required target is met.
         if (vd.totalVote >= vd.voteRequired) {
             removeCommunity(commAdd);
             allRemoved.push(commAdd);
         }
 
-        emit VotingEvent(
-            msg.sender,
-            commAdd,
+        emit VotingDataEvent(
+            vd.isOpen,
+            vd.isRemoved,
+            vd.openedBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
-            vd.isOpen,
-            vd.isRemoved
+            vd.requestedTimeChange,
+            vd.reason
         );
-    }
-
-    modifier isOwnerRemoved() {
-        require(!ownerRemoved);
-        _;
-    }
-
-    modifier removalListPresence() {
-        require(ownerRemovalList.length > 0);
-        _;
-    }
-
-    function getOwnerRemovalList(uint256 index)
-        public
-        view
-        removalListPresence
-        returns (address)
-    {
-        return ownerRemovalList[index];
-    }
-
-    function ownerRemovalListLength() public view returns (uint256) {
-        return ownerRemovalList.length;
     }
 
     /**
      * @dev Request to remove owner. Once owner is removed, new owner cannot be added.
      * Requirements:
      * - Only trusted communities.
-     * - Sufficient number of community should be presence.
+     * - Sufficient number of communities should be presence.
      * - Owner is not removed.
      * - There should not be active owner removal request.
      *
@@ -290,11 +330,12 @@ contract VotingRemoval is Community {
     }
 
     /**
-     * @dev Vote to remove owner, once owner is removed it cannot be added. Community will be in charge.
+     * @dev Vote to remove owner, once owner is removed it cannot be added,
+     * thereafter trusted registered communities will be in charge.
      *
      * Requirements:
      * - Only trusted communities.
-     * - Sufficient number of community should be presence.
+     * - Sufficient number of communities should be presence.
      * - Owner is not removed.
      * - Current owner removal request should be active.
      * - Sender has not voted already.
@@ -312,14 +353,14 @@ contract VotingRemoval is Community {
         // Current removal request need to be active.
         require(vd.isOpen, "Current owner removal request is not active");
 
-        // Sender has not vote already.
+        // Sender has not voted already.
         require(!vd.voted[msg.sender], "This address has already voted");
         vd.voted[msg.sender] = true;
         vd.totalVote++;
 
+        // If vote required satisfies than owner address is set to 0;
         if (vd.totalVote >= vd.voteRequired) {
-            _removeOwner();
-            assert(ownerRemoved == true);
+            require(_removeOwner());
             vd.isRemoved = true;
         }
 
@@ -336,13 +377,30 @@ contract VotingRemoval is Community {
     }
 
     /**
+     * @dev Returns proposal creator address by given `index`.
+     */
+    function getOwnerRemovalList(uint256 index) public view returns (address) {
+        require(
+            ownerRemovalListLength() > 0,
+            "No active owner removal proposals."
+        );
+        return ownerRemovalList[index];
+    }
+
+    /**
+     * @dev Returns {ownerRemovalList} length.
+     */
+    function ownerRemovalListLength() public view returns (uint256) {
+        return ownerRemovalList.length;
+    }
+
+    /**
      * @dev Check if the previous owner removal request expired. If already expired, resets it.
-     * OwnerRemovalList always update the current active removal request at last index.
      * @return bool true if active and false if not active.
      * */
     function _previousOwnerRemovalActive() private returns (bool) {
         // Get the data of removal request submitted by the given address.
-        // OwnerRemovalList always update the current active removal request at last index.
+        // {OwnerRemovalList} always update the current active removal request.
         VotingData storage vd = ownerRemoval[getOwnerRemovalList(
             ownerRemovalListLength() - 1
         )];
@@ -362,13 +420,30 @@ contract VotingRemoval is Community {
     /**
      * @dev Remove the owner from the contract.
      * Onwer cannot be added once it's removed.
-     * Trusted community will be in charge of the this contract.
+     * After owner is removed trusted registered communities
+     * will be in charge of the this contract.
      */
-    function _removeOwner() private {
+    function _removeOwner() private returns (bool) {
         replaceOwner(address(0));
         ownerRemoved = true;
+        return ownerRemoved;
     }
 
+    /**
+     * @dev Get the number of voting numbers required for the
+     * prosposal to be successful.
+     *
+     * 51% of total reqistered trusted community consensus is required.
+     * Exactly 51% of voting number required cannot be achieved if
+     * total Community modulus 100 is not equal zero, so in that case adding
+     * 1 in the {_calculateVotingRequired} gives the percentage different of
+     * around 1 percent, so actualy percentage will be between 51% and 52%.
+     * If more community is added, the less the gap in the percentage difference
+     * and more accuracy towards 51% target.
+     *
+     * @return number of voting required.
+     *
+     */
     function _calculateVotingRequired() private view returns (uint256) {
         if (trustedCommunity % 100 == 0) {
             return _votingPercentage();
@@ -377,23 +452,42 @@ contract VotingRemoval is Community {
         }
     }
 
+    /**
+     * @dev Retursn 51% of total registered trusted community.
+     */
     function _votingPercentage() private view returns (uint256) {
         return (trustedCommunity * 51) / 100;
     }
 
+    /**
+     * @dev Return {removalList} size, which contains the address of
+     * those who have created proposals.
+     */
     function removalListSize() public view returns (uint256) {
         return removalList.length;
     }
 
+    /**
+     * @dev Returns {allRemoved} size, which contains the address of
+     * communities that has been removed.
+     */
     function allRemovedSize() public view returns (uint256) {
         return allRemoved.length;
     }
 
+    /**
+     * @dev Returns community removal creator address
+     * directly through `index` access.
+     */
     function getRedListedAddress(uint256 index) public view returns (address) {
         return removalList[index];
     }
 
-    function getAllRemovedAddress(uint256 index) public view returns (address) {
+    /**
+     * @dev Returns address of community which has been removed
+     * directly through `index` access.
+     */
+    function getRemovedAddress(uint256 index) public view returns (address) {
         return allRemoved[index];
     }
 }
