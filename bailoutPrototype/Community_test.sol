@@ -4,19 +4,19 @@ import "remix_accounts.sol";
 import "./Community.sol";
 
 contract CommunityERC20Test {
-    Community comm;
+    Community cmt;
 
     address acc1;
     address acc2;
     address acc3;
-    address acc4;
-    address acc5;
+    address deployAdd;
     
     function beforeAll() public {
-        comm = new Community();
+        cmt = new Community();
         acc1 = TestsAccounts.getAccount(0);
         acc2 = TestsAccounts.getAccount(1);
         acc3 = TestsAccounts.getAccount(2);
+        deployAdd = address(this);
         // acc4 = TestsAccounts.getAccount(3);
         // acc5 = TestsAccounts.getAccount(4);
     }
@@ -25,10 +25,14 @@ contract CommunityERC20Test {
         Assert.equal(acc1, TestsAccounts.getAccount(0), 'Account should be getAccount(0)');
         Assert.equal(acc2, TestsAccounts.getAccount(1), 'Account should be getAccount(1)');
         Assert.equal(acc3, TestsAccounts.getAccount(2), 'Account should be getAccount(2)');
+        Assert.equal(deployAdd, address(this), 'Account should be getAccount(2)');
+    }
+
+    function correctlySetsOwner() public {
+        Assert.equal(cmt.getOwner(), address(this), 'Owner accounts not equal');
     }
     
-    funciton corretlySetsOwner() public {
-        
-    }
+    
+    
     
 }

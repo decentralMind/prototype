@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 
 contract Community {
+    
     // Deployer of the address is automatically set to owner.
     address public owner;
 
@@ -18,6 +19,10 @@ contract Community {
     mapping(address => bool) isTrusted;
 
     mapping(address => uint256) whenToTrust;
+    
+    constructor() public {
+      owner = msg.sender;
+    }
 
     modifier isRegistered(address community) {
         require(registered[community] == true);
