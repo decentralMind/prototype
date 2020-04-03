@@ -3,6 +3,7 @@ import "remix_tests.sol";
 import "remix_accounts.sol";
 import "./Community.sol";
 
+
 contract CommunityERC20Test {
     Community cmt;
 
@@ -10,7 +11,7 @@ contract CommunityERC20Test {
     address acc2;
     address acc3;
     address deployAdd;
-    
+
     function beforeAll() public {
         cmt = new Community();
         acc1 = TestsAccounts.getAccount(0);
@@ -20,19 +21,31 @@ contract CommunityERC20Test {
         // acc4 = TestsAccounts.getAccount(3);
         // acc5 = TestsAccounts.getAccount(4);
     }
-    
+
     function checkCorrectAccountsLoaded() public {
-        Assert.equal(acc1, TestsAccounts.getAccount(0), 'Account should be getAccount(0)');
-        Assert.equal(acc2, TestsAccounts.getAccount(1), 'Account should be getAccount(1)');
-        Assert.equal(acc3, TestsAccounts.getAccount(2), 'Account should be getAccount(2)');
-        Assert.equal(deployAdd, address(this), 'Account should be getAccount(2)');
+        Assert.equal(
+            acc1,
+            TestsAccounts.getAccount(0),
+            "Account should be getAccount(0)"
+        );
+        Assert.equal(
+            acc2,
+            TestsAccounts.getAccount(1),
+            "Account should be getAccount(1)"
+        );
+        Assert.equal(
+            acc3,
+            TestsAccounts.getAccount(2),
+            "Account should be getAccount(2)"
+        );
+        Assert.equal(
+            deployAdd,
+            address(this),
+            "Account should be getAccount(2)"
+        );
     }
 
     function correctlySetsOwner() public {
-        Assert.equal(cmt.getOwner(), address(this), 'Owner accounts not equal');
+        Assert.equal(cmt.getOwner(), address(this), "Owner accounts not equal");
     }
-    
-    
-    
-    
 }
