@@ -54,6 +54,12 @@ contract Community {
     event NewTrustedDateEvent(uint newDate);
 
     /**
+     *  @dev Returns owner.
+     */
+    function getOwner() public view returns(address) {
+        return owner;
+    }
+    /**
      * @dev Transfer ownership to `newOwner`.
      *
      * Requirements:

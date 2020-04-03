@@ -27,5 +27,8 @@ contract CommunityERC20Test {
         Assert.equal(acc3, TestsAccounts.getAccount(2), 'Account should be getAccount(2)');
     }
     
+    funciton corretlySetsOwner() public {
+        
+    }
     
 }
