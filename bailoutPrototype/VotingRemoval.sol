@@ -5,24 +5,20 @@ import "./Community.sol";
 
 contract VotingRemoval is Community {
     /**
-     * @dev Voitng system for removal of community members and owners
-     * and resetting expiry date of the active voting proposal.
-     *
-     * Once owner is removed, new owner cannot be added, thereafter community
+     * @dev Voting system for removal of community members and owner
+     * and resetting expiry date.
+     * Once owner has been removed, new owner cannot be added, thereafter community
      * will be incharge of the smart contract.
      *
      * Removal process requires 51% voting consensus from communities
-     * regisered as trusted. {_calculateVotingRequired} is responsible to
-     * calculate required number of voters.
+     * regisered as trusted. {_calculateVotingRequired} is responsible for
+     * calculating required number of voters.
      *
-     * Currently 200 trusted registered communites is set to allow for
-     * voting. This number be change by owner.
+     * Currently, 200 trusted registered communites is set to allow for
+     * voting. This number be changed by owner anytime.
      */
 
-    /**
-     * @dev This is the main data format for voting.
-     * It is used in every voting proposals.
-     */
+    //Main format for storing voting data.
     struct VotingData {
         bool isOpen;
         bool isRemoved;
@@ -30,18 +26,18 @@ contract VotingRemoval is Community {
         uint256 expiryDate;
         uint256 totalVote;
         uint256 voteRequired;
-        // This is only used when rquesting removal time frame, removalTimeFrame.
+        // `requestedTimeChange` is only used when rquesting removal time frame, removalTimeFrame.
         uint256 requestedTimeChange;
         bytes reason;
         mapping(address => bool) voted;
     }
 
-    // Community removal proposals with address of proposed community to be removed
+    // Community removal proposals with address of proposed community to be removed.
     // map to data.
     mapping(address => VotingData) redList;
 
     // Record the address of proposals.
-    // Will be used to get voting data from {redList} mapping.
+    // Will be used to get voting data from `redList` mapping.
     address[] removalList;
 
     // All community removed address.
@@ -51,10 +47,10 @@ contract VotingRemoval is Community {
     uint256 public removalTimeFrame = 432000;
 
     // Minimum amount of registered community members before
-    // allowing communities to vote.
+    // allowing communities to create proposals and vote.
     uint256 communityNumber = 200;
 
-    // Expiry Date change proposals with address of proposals mapped with voting data.
+    // Expiry date change proposals with address of proposals mapped to voting data.
     mapping(address => VotingData) changeTimeFrame;
 
     // Owner removal proposals with address of proposals mapped with voting data.
@@ -80,7 +76,7 @@ contract VotingRemoval is Community {
 
     /**
      * @dev Throw if current expiry date change proposal
-     * by the given community has expired of not open.
+     * by the given community has expired or not open.
      */
     modifier timeFrameRegistered(address openBy) {
         VotingData memory vd = changeTimeFrame[openBy];
@@ -92,7 +88,7 @@ contract VotingRemoval is Community {
     }
 
     /**
-     * @dev Throw if minimum total number of required community is not reached.
+     * @dev Throw if minimum total number of required community has not been reached.
      * Community should be registered as trusted.
      */
     modifier sufficientCommunityNumber() {
@@ -125,10 +121,9 @@ contract VotingRemoval is Community {
     event CommunityNumberEvent(uint256 newNumber);
 
     /**
-     *@dev Assign `newNumber` of minimum registered communities required before
-     * allowing to open proposals and voting. Communites should be regisitred
-     * as trusted.
-     *
+     *@dev Assign minimum `newNumber` requirement for registered communities before
+     * allowing them to open proposals and voting. 
+     * 
      * emits a {CommunityNumberEvent}
      */
     function changeCommunityNumber(uint256 newNumber) external onlyOwner {
@@ -145,7 +140,7 @@ contract VotingRemoval is Community {
      * -Current proposal creator address should not have other active expiry date
      *  change proposals.
      *
-     * emits a {VotingDataEvent}
+     * emits a {VotingDataEvent}.
      */
     function openVoteTimeFrame(uint256 newTimeFrame, bytes memory reason)
         public
@@ -217,13 +212,13 @@ contract VotingRemoval is Community {
     }
 
     /**
-     * @dev Open proposal to remove communities address `commAdd1` because of 'reason'.
+     * @dev Open proposal to remove community address `commAdd1` because of 'reason'.
      * Requirements:
      * -Only trusted registered communities.
      * -Should not be already listed for removal.
      * -Sufficient number of communities should be presence.
      *
-     * emits a {VotingDataEvent}
+     * emits a {VotingDataEvent}.
      */
     function openCommunityRemoval(address commAdd, bytes memory reason)
         public
@@ -260,9 +255,9 @@ contract VotingRemoval is Community {
      * - Sufficient number of communities should be presence.
      * - Given address can only vote once.
      *
-     * emits {VotingDataEvent}
+     * emits a {VotingDataEvent}.
      */
-    function voteForCommunityRemoval(address commAdd) public onlyEligible {
+    function voteForCommunityRemoval(address commAdd) external onlyEligible {
         VotingData storage vd = redList[commAdd];
         require(vd.isOpen);
         require(!vd.voted[msg.sender]);
@@ -270,9 +265,9 @@ contract VotingRemoval is Community {
         vd.expiryDate = block.timestamp + removalTimeFrame;
         vd.totalVote++;
 
-        // Remove community memeber if voting required target is met.
+        // Remove community member if voting required target is met.
         if (vd.totalVote >= vd.voteRequired) {
-            removeCommunity(commAdd);
+            _removeCommunity(commAdd);
             allRemoved.push(commAdd);
         }
 
@@ -424,7 +419,7 @@ contract VotingRemoval is Community {
      * will be in charge of the this contract.
      */
     function _removeOwner() private returns (bool) {
-        replaceOwner(address(0));
+        _replaceOwner(address(0));
         ownerRemoved = true;
         return ownerRemoved;
     }
@@ -438,7 +433,7 @@ contract VotingRemoval is Community {
      * total Community modulus 100 is not equal zero, so in that case adding
      * 1 in the {_calculateVotingRequired} gives the percentage different of
      * around 1 percent, so actualy percentage will be between 51% and 52%.
-     * If more community is added, the less the gap in the percentage difference
+     * If more communities are added, the less the gap in the percentage difference
      * and more accuracy towards 51% target.
      *
      * @return number of voting required.

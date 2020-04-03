@@ -2,17 +2,22 @@ pragma solidity ^0.5.0;
 
 
 contract Community {
+    // Deployer of the address is automatically set to owner.
     address public owner;
 
-    uint256 public totalCommunity;
+    // No of total community registered.
+    uint256 totalCommunity;
 
-    uint256 public trustedCommunity;
+    uint256 trustedCommunity;
+
+    // After 90 days community can be trusted.
+    uint256 trustedDate = 7776000;
 
     mapping(address => bool) registered;
 
     mapping(address => bool) isTrusted;
-    
-    mapping(address => bool) fullAuthority;
+
+    mapping(address => uint256) whenToTrust;
 
     modifier isRegistered(address community) {
         require(registered[community] == true);
@@ -27,39 +32,118 @@ contract Community {
     modifier onlyEligible() {
         require(
             owner == msg.sender ||
-                (registered[msg.sender] &&
-                    isTrusted[msg.sender] &&
-                    fullAuthority[msg.sender])
+                (registered[msg.sender] && isTrusted[msg.sender])
         );
         _;
     }
-    
+
     modifier isFullyAuthorized(address community) {
         require(registered[community] == true);
         _;
     }
-    
 
-    function replaceOwner(address newOwner) public {
+    modifier isAlreadyTrusted(address registeredCommunity) {
+        require(!isTrusted[registeredCommunity]);
+        _;
+    }
+
+    event NewOwnerEvent(address newOwner);
+    event NewCommunityEvent(address newCommunity, uint256 whenToTrust);
+    event NewTrustedCommunity(address registeredCommunity);
+    event CommunityRemovedEvent(address oldCommunity);
+    event NewTrustedDateEvent(uint newDate);
+
+    /**
+     * @dev Transfer ownership to `newOwner`.
+     *
+     * Requirements:
+     * - Must be owner.
+     *
+     * emits a {NewOwnerEvent}
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        _replaceOwner(newOwner);
+    }
+
+    /**
+     * @dev Change ownership to `newOwner`.
+     *
+     * emits a {NewOwnerEvent}.
+     */
+    function _replaceOwner(address newOwner) internal {
         owner = newOwner;
+        emit NewOwnerEvent(owner);
     }
 
-    function addCommunity(address newCommunity) public onlyEligible {
+    /**
+     * @dev Register `newCommunity` with future timestamp that
+     * it can be trusted.
+     *
+     * emits a {NewCommunityEvent}.
+     */
+    function addCommunity(address newCommunity) external onlyEligible {
         registered[newCommunity] = true;
+        whenToTrust[newCommunity] = block.timestamp + trustedDate;
+        emit NewCommunityEvent(newCommunity, whenToTrust[newCommunity]);
     }
 
-    function addtoTrusted(address oldCommunity) public onlyEligible {
-        require(registered[oldCommunity]);
-        isTrusted[oldCommunity] = true;
+    /**
+     * @dev Registerd `registeredCommunity` as trusted.
+     *
+     * Requirements:
+     * - Must be 90 days old.
+     *
+     * emits a {NewTrustedCommunity}
+     */
+    function addtoTrusted(address registeredCommunity) external {
+        require(registered[registeredCommunity]);
+        if (whenToTrust[registeredCommunity] > block.timestamp) {
+            isTrusted[registeredCommunity] = true;
+        }
+
+        emit NewTrustedCommunity(registeredCommunity);
     }
 
-    function giveFullAuthroity(address oldCommunity) public onlyEligible {
-        fullAuthority[oldCommunity] = true;
-    }
-
-    function removeCommunity(address oldCommunity)
-        public
+    /**
+     * @dev Owner directly add already `registeredCommunity` to trusted list.
+     *
+     * Requirements:
+     * - Must be owner
+     * - Community shoud already be registered but not as trusted.
+     */
+    function directlyTrustedByOwner(address registeredCommunity)
+        external
         onlyOwner
+        isAlreadyTrusted(registeredCommunity)
+    {
+        isTrusted[registeredCommunity] = true;
+    }
+
+     /**
+     * @dev Owner directly remove `oldCommunity`.
+     * Requirements:
+     * - Must be owner
+     * - Community shoud already be registered.
+     */
+    function directlyRemoveCommunity(address oldCommunity) external onlyOwner {
+        _removeCommunity(oldCommunity);
+        assert(
+            registered[oldCommunity] == false &&
+                isTrusted[oldCommunity] == false
+        );
+    }
+
+    /**
+     * @dev Removes already Registered `oldCommunity`
+     *
+     * Requirements:
+     * - Community shoud be already registered.
+     * - Only be called by trusted communities.
+     *
+     * emits a {CommunityRemovedEvent}
+     */
+    function _removeCommunity(address oldCommunity)
+        internal
         isRegistered(oldCommunity)
     {
         registered[oldCommunity] = false;
@@ -68,8 +152,20 @@ contract Community {
             isTrusted[oldCommunity] = false;
         }
 
-        if (fullAuthority[oldCommunity]) {
-            fullAuthority[oldCommunity] = false;
-        }
+        emit CommunityRemovedEvent(oldCommunity);
+    }
+    
+    /**
+     * @dev Set `trustedDate` to `newDate`.
+     * Requirement:
+     * - Must be owner.
+     * - `newDate` should be greater than current `block.timestamp`.
+     * 
+     * emits a {NewTrustedDateEvent}
+     */
+    function setTrustedDate(uint newDate) public onlyOwner {
+        require(newDate > block.timestamp);
+        trustedDate = newDate;
+        emit NewTrustedDateEvent(newDate);
     }
 }
