@@ -33,7 +33,7 @@ contract Community {
         );
         _;
     }
-
+    
     modifier isFullyAuthorized(address community) {
         require(registered[community] == true);
         _;

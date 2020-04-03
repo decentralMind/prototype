@@ -105,7 +105,7 @@ contract VotingRemoval is Community {
         emit CommunityNumberEvent(newNumber);
     }
     
-    
+
     function openVoteTimeFrame(bytes memory reason, uint256 newTimeFrame)
         public
         onlyEligible
@@ -212,15 +212,21 @@ contract VotingRemoval is Community {
         );
     }
     
+    function voteToRemoveOwner() onlyEligible public {
+        //onlyElibible are able to vote.
+        //
+            
+    }
+    
     function _calculateVotingRequired() private view returns (uint) {
         if(trustedCommunity % 100 == 0) {
-            return _votingAlgorithm();
+            return _votingPercentage();
         } else {
-            return (_votingAlgorithm() + 1);
+            return (_votingPercentage() + 1);
         }
     }
 
-    function _votingAlgorithm() private view returns(uint) {
+    function _votingPercentage() private view returns(uint) {
         return trustedCommunity * 51/100;
     }
     
