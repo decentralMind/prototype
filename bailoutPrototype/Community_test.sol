@@ -6,52 +6,52 @@ import "./Community.sol";
 
 contract CommunityERC20Test {
     Community cmt;
-
+    address deployAdd;
+    
+    address acc0;
     address acc1;
     address acc2;
-    address acc3;
-    address deployAdd;
+    // Unix time.
+    uint8 dateToTrust = 1;
 
     function beforeAll() public {
         cmt = new Community();
-        acc1 = TestsAccounts.getAccount(0);
-        acc2 = TestsAccounts.getAccount(1);
-        acc3 = TestsAccounts.getAccount(2);
+        acc0 = TestsAccounts.getAccount(0);
+        acc1 = TestsAccounts.getAccount(1);
+        acc2 = TestsAccounts.getAccount(2);
         deployAdd = address(this);
-        // acc4 = TestsAccounts.getAccount(3);
-        // acc5 = TestsAccounts.getAccount(4);
     }
-
-    function checkCorrectAccountsLoaded() public {
-        Assert.equal(
-            acc1,
-            TestsAccounts.getAccount(0),
-            "Account should be getAccount(0)"
-        );
-        Assert.equal(
-            acc2,
-            TestsAccounts.getAccount(1),
-            "Account should be getAccount(1)"
-        );
-        Assert.equal(
-            acc3,
-            TestsAccounts.getAccount(2),
-            "Account should be getAccount(2)"
-        );
-        Assert.equal(
-            deployAdd,
-            address(this),
-            "Account should be this contract address"
-        );
+    
+    function beforeEach() public {
+        cmt.addCommunity(acc0);
+        cmt.setTrustedDate(dateToTrust);
     }
-
+    
     function shouldCorrectlySetsOwner() public {
-        Assert.equal(cmt.getOwner(), address(this), "Owner accounts should be deployment account.");
+        Assert.equal(cmt.getOwner(), address(this), 'Owner accounts should be deployment account.');
     }
     
     function onwerShouldCorretlyAddCommunity() public {
-        cmt.addCommunity(acc1)
+        Assert.equal(cmt.checkIfRegistered(acc0), true, 'Should return true');
     }
     
+    function shouldCorrelySetsCommunityTrustedDateForCommunity() public {
+        Assert.equal(cmt.getTrustedDate(), dateToTrust, "Trusted date is not correctly set.");
+    }
     
-}
+    /// #sender: account-0
+    function communityShouldBeTrustedAfterSpecificDate() public {
+        cmt.addToTrusted(msg.sender);
+        Assert.equal(cmt.checkIfTrusted(msg.sender), true, 'Account should be registered as trusted');
+    }
+    
+    function shouldReturnFalseForNonRegisteredCommunity() public {
+        Assert.equal(cmt.checkIfRegistered(acc2), false, 'Should return false');
+    }
+    
+    function shouldRemoveAccountSuccessfullyByOwner() public {
+        cmt.directlyRemoveCommunity(acc0);
+        Assert.equal(cmt.checkIfRegistered(acc0), false, 'Should return false');
+    }
+    
+ }

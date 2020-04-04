@@ -106,13 +106,11 @@ contract Community {
      *
      * emits a {NewTrustedCommunity}
      */
-    function addtoTrusted(address registeredCommunity) external onlyEligible {
-        require(registered[registeredCommunity]);
-        if (whenToTrust[registeredCommunity] > block.timestamp) {
-            isTrusted[registeredCommunity] = true;
-        }
-
-        emit NewTrustedCommunity(registeredCommunity);
+    function addToTrusted(address oldCommunity) external {
+        require(registered[oldCommunity]);
+        require(whenToTrust[oldCommunity] <= block.timestamp);
+        isTrusted[oldCommunity] = true;
+        emit NewTrustedCommunity(oldCommunity);
     }
 
     /**
@@ -170,12 +168,10 @@ contract Community {
      * @dev Set `trustedDate` to `newDate`.
      * Requirement:
      * - Must be owner.
-     * - `newDate` should be greater than current `block.timestamp`.
      * 
      * emits a {NewTrustedDateEvent}
      */
     function setTrustedDate(uint newDate) public onlyOwner {
-        require(newDate > block.timestamp);
         trustedDate = newDate;
         emit NewTrustedDateEvent(newDate);
     }
@@ -199,6 +195,13 @@ contract Community {
      */
     function checkWhenToTrusted(address community) external view returns(uint){
         return whenToTrust[community];
+    }
+    
+    /**
+     * @dev Returns `trustedDate`.
+     */
+    function getTrustedDate() external view returns(uint) {
+        return trustedDate;
     }
     
 }
