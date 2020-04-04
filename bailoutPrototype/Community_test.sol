@@ -41,11 +41,13 @@ contract CommunityERC20Test {
         Assert.equal(
             deployAdd,
             address(this),
-            "Account should be getAccount(2)"
+            "Account should be this contract address"
         );
     }
 
-    function correctlySetsOwner() public {
-        Assert.equal(cmt.getOwner(), address(this), "Owner accounts not equal");
+    function shouldCorrectlySetsOwner() public {
+        Assert.equal(cmt.getOwner(), address(this), "Owner accounts should be deployment account.");
     }
+    
+    
 }
