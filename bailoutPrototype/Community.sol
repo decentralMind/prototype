@@ -106,7 +106,7 @@ contract Community {
      *
      * emits a {NewTrustedCommunity}
      */
-    function addtoTrusted(address registeredCommunity) external  {
+    function addtoTrusted(address registeredCommunity) external onlyEligible {
         require(registered[registeredCommunity]);
         if (whenToTrust[registeredCommunity] > block.timestamp) {
             isTrusted[registeredCommunity] = true;
