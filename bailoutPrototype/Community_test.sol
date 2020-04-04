@@ -49,5 +49,9 @@ contract CommunityERC20Test {
         Assert.equal(cmt.getOwner(), address(this), "Owner accounts should be deployment account.");
     }
     
+    function onwerShouldCorretlyAddCommunity() public {
+        cmt.addCommunity(acc1)
+    }
+    
     
 }

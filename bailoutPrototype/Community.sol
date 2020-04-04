@@ -179,4 +179,26 @@ contract Community {
         trustedDate = newDate;
         emit NewTrustedDateEvent(newDate);
     }
+    
+    /**
+     * @dev Returns true if `community` is regisitered and vice versa.
+     */
+    function checkIfRegistered(address community) external view returns(bool){
+        return registered[community];
+    }
+    
+    /**
+     * @dev Returns true if `community` is trusted and vice versa.
+     */
+    function checkIfTrusted(address community) external view returns(bool){
+        return isTrusted[community];
+    }
+    
+    /**
+     * @dev Returns date of the `community` that they can set as trusted.
+     */
+    function checkWhenToTrusted(address community) external view returns(uint){
+        return whenToTrust[community];
+    }
+    
 }
