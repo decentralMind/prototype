@@ -30,8 +30,14 @@ contract CommunityERC20Test {
         Assert.equal(vr.checkIfTrusted(acc0), true, 'Community not trusted');
     }
 
-    function openProposalToChangeTimeFrame() {
+    function openProposalToChangeTimeFrame() public {
+        // Set total number of community required to open voting to 1 for demostration propose.
+        // Original is set to 200;
+        vr.changeCommunityNumber(1);
+        Assert.equal(vr.getCommunityNumber(), 1, 'Community number needs to set to 1');
         vr.openVoteTimeFrame(3, '0xff');
+        Assert.equal(vr.isTimeFrameProposalOpen(), true, 'TimeFrame proposal should be open');
     }
+
 
 }

@@ -9,6 +9,7 @@ contract Community {
     // No of total community registered.
     uint totalCommunity;
 
+    // No of total community labeled as trusted.
     uint trustedCommunity;
 
     // After 90 days community can be trusted.
@@ -119,6 +120,7 @@ contract Community {
         require(registered[oldCommunity]);
         require(whenToTrust[oldCommunity] <= block.timestamp);
         isTrusted[oldCommunity] = true;
+        trustedCommunity ++;
         emit NewTrustedCommunity(oldCommunity);
     }
 
@@ -135,6 +137,7 @@ contract Community {
         isAlreadyTrusted(registeredCommunity)
     {
         isTrusted[registeredCommunity] = true;
+        trustedCommunity ++;
     }
 
      /**

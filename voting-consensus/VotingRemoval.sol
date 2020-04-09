@@ -64,7 +64,6 @@ contract VotingRemoval is Community {
     // Set true if owner is successfully removed.
     bool ownerRemoved;
     
-    
     /**
      * @dev Throw if change time frame proposal already expired.
      * Inactive time frame proposal set expiry date to 0 by default.
@@ -102,11 +101,13 @@ contract VotingRemoval is Community {
 
     /**
      * @dev Throw if minimum total number of required community has not been reached.
+     * Minimum required community number is required in order for the community to contral the smart contract
+     * without owner.
      * Community should be registered as trusted.
      */
     modifier sufficientCommunityNumber() {
         require(
-            trustedCommunity >= 200,
+            trustedCommunity >= communityNumber,
             "Total number of trusted registered community should be greater than what required"
         );
         _;
@@ -159,12 +160,12 @@ contract VotingRemoval is Community {
         public
         onlyEligible
         timeFrameNotActive(msg.sender)
-        sufficientCommunityNumber
+        // sufficientCommunityNumber
     {
         VotingData storage vd = changeTimeFrame[msg.sender];
         vd.isOpen = true;
         vd.openedBy = msg.sender;
-        vd.expiryDate = now + removalTimeFrame;
+        vd.expiryDate = block.timestamp + removalTimeFrame;
         vd.totalVote++;
         vd.voteRequired = _calculateVotingRequired();
         vd.requestedTimeChange = newTimeFrame;
@@ -464,14 +465,14 @@ contract VotingRemoval is Community {
     }
 
     /**
-     * @dev Retursn 51% of total registered trusted community.
+     * @dev Returns 51% of total registered trusted community.
      */
     function _votingPercentage() private view returns (uint256) {
         return (trustedCommunity * 51) / 100;
     }
 
     /**
-     * @dev Return {removalList} size, which contains the address of
+     * @dev Returns {removalList} size, which contains the address of
      * those who have created proposals.
      */
     function removalListSize() public view returns (uint256) {
@@ -512,15 +513,23 @@ contract VotingRemoval is Community {
     /**
      * @dev Returns true if change time frame proposal is open and vice versa.
      */
-    function changeTimeFrameOpen(address openBy) public view returns(bool) {
-        VotingData memory vd = changeTimeFrame[openBy];
+    function isTimeFrameProposalOpen() public view returns(bool) {
+        VotingData memory vd = changeTimeFrame[msg.sender];
     
-        if(!vd.isOpen || vd.expiryDate > block.timestamp) {
+        // Checks if proposal is open.
+        // Checks if proposal already expired.
+        if(!vd.isOpen || vd.expiryDate <= block.timestamp) {
             return false;
-        } else {
-            return true;
-        }
-        
+        } 
+
+        return true;
+    }
+
+    /**
+    * @dev Returns `communityNumber`.
+    */
+    function getCommunityNumber() public view returns(uint) {
+        return communityNumber;
     }
     
 }
