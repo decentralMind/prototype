@@ -41,7 +41,7 @@ contract VotingRemoval is Community {
 
     // All community removed address.
     address[] allRemoved;
-
+    
     // Voting open for 5 days.
     uint256 public removalTimeFrame = 432000;
 
@@ -51,7 +51,10 @@ contract VotingRemoval is Community {
 
     // Expiry date change proposals with address of proposals mapped to voting data.
     mapping(address => VotingData) changeTimeFrame;
-
+    
+    // Address of those who have put proposal to change time.
+    address[] changeTimeFrameList;
+    
     // Owner removal proposals with address of proposals mapped with voting data.
     mapping(address => VotingData) ownerRemoval;
 
@@ -60,7 +63,18 @@ contract VotingRemoval is Community {
 
     // Set true if owner is successfully removed.
     bool ownerRemoved;
-
+    
+    
+    /**
+     * @dev Throw if change time frame proposal already expired.
+     * Inactive time frame proposal set expiry date to 0 by default.
+     * Check for expired time frame proposal.
+     */
+    modifier timeFrameNotActive(address sender) {
+        VotingData memory vd = changeTimeFrame[sender];
+        require(vd.expiryDate > block.timestamp || vd.expiryDate == 0);
+        _;
+    }
     /**
      * @dev Throw if current voting proposal is not opened.
      */
@@ -144,7 +158,7 @@ contract VotingRemoval is Community {
     function openVoteTimeFrame(uint256 newTimeFrame, bytes memory reason)
         public
         onlyEligible
-        timeFrameRegistered(msg.sender)
+        timeFrameNotActive(msg.sender)
         sufficientCommunityNumber
     {
         VotingData storage vd = changeTimeFrame[msg.sender];
@@ -156,6 +170,9 @@ contract VotingRemoval is Community {
         vd.requestedTimeChange = newTimeFrame;
         vd.reason = reason;
         vd.voted[msg.sender] = true;
+        
+        // Store the array the list.
+        changeTimeFrameList.push(msg.sender);
 
         emit VotingDataEvent(
             vd.isOpen,
@@ -484,4 +501,26 @@ contract VotingRemoval is Community {
     function getRemovedAddress(uint256 index) public view returns (address) {
         return allRemoved[index];
     }
+    
+     /**
+     * @dev Returns length of `changeTimeFrameList`.
+     */
+    function getChangeTimeFrameList() public view returns (uint) {
+        changeTimeFrameList.length;
+    }
+    
+    /**
+     * @dev Returns true if change time frame proposal is open and vice versa.
+     */
+    function changeTimeFrameOpen(address openBy) public view returns(bool) {
+        VotingData memory vd = changeTimeFrame[openBy];
+    
+        if(!vd.isOpen || vd.expiryDate > block.timestamp) {
+            return false;
+        } else {
+            return true;
+        }
+        
+    }
+    
 }
