@@ -7,16 +7,21 @@ contract Community {
     address public owner;
 
     // No of total community registered.
-    uint256 totalCommunity;
+    uint totalCommunity;
 
-    uint256 trustedCommunity;
+    uint trustedCommunity;
 
     // After 90 days community can be trusted.
-    uint256 trustedDate = 7776000;
-
+    uint trustedDate = 7776000;
+    
+    // Set limit for how much token can be minted by new community.
+    // Can be set to new amount by owner or through community consensus.
+    // Restriction can be removed after `trustedDate`.
+    uint newCommunityMintAmount = 30000;
+    
     mapping(address => bool) registered;
 
-    mapping(address => bool) isTrusted;
+    mapping(address => bool) isTrusted; 
 
     mapping(address => uint256) whenToTrust;
      
