@@ -25,19 +25,30 @@ contract CommunityERC20Test {
         vr.directlyTrustedByOwner(acc0);
     }
 
+   function beforeEach() public {
+        // Set total number of community required to open voting to 1 for demostration propose.
+        // Original is set to 200;
+        vr.changeCommunityNumber(1);
+    }
+
+    function beforeEachShouldSuccessfullySetCommunityNumber() public {
+         Assert.equal(vr.getCommunityNumber(), 1, 'Community number needs to set to 1');
+
+    }
+
     function newCommunitySucessfullyRegisteredAndTrusted() public {
         Assert.equal(vr.checkIfRegistered(acc0), true, 'Community not registered');
         Assert.equal(vr.checkIfTrusted(acc0), true, 'Community not trusted');
     }
 
-    function openProposalToChangeTimeFrame() public {
-        // Set total number of community required to open voting to 1 for demostration propose.
-        // Original is set to 200;
-        vr.changeCommunityNumber(1);
-        Assert.equal(vr.getCommunityNumber(), 1, 'Community number needs to set to 1');
+    function successfullyOpenProposalToChangeTimeFrame() public {
         vr.openVoteTimeFrame(3, '0xff');
         Assert.equal(vr.isTimeFrameProposalOpen(), true, 'TimeFrame proposal should be open');
     }
+
+    // function successfullyVoteToChangeTimeFrame() public {
+
+    // }
 
 
 }
