@@ -4,12 +4,9 @@ import './ERC20.sol';
 
 contract PaymentGateway is ERC20 {
     
-    
-    
     mapping(address => bool) setGatewayAdd;
     
     mapping(address => address) gatewayAddList;
-
 
     modifier isGateywayReg(address gateway) {
         require(setGatewayAdd[gateway]);
@@ -27,10 +24,8 @@ contract PaymentGateway is ERC20 {
         _burn(gatewayAddList[receiver], amount);
     }
 
-
     function removeGateWay(address gatewayAdd) external  isGateywayReg(gatewayAdd) {
         setGatewayAdd[gatewayAdd] = false;
     }
-    
-    
 }
+

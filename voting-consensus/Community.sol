@@ -19,6 +19,8 @@ contract Community {
     mapping(address => bool) isTrusted;
 
     mapping(address => uint256) whenToTrust;
+     
+    mapping(address => uint) registeredDate;
     
     constructor() public {
       owner = msg.sender;
@@ -53,7 +55,7 @@ contract Community {
     }
 
     event NewOwnerEvent(address newOwner);
-    event NewCommunityEvent(address newCommunity, uint256 whenToTrust);
+    event NewCommunityEvent(address newCommunity, uint registeredDate, uint256 whenToTrust);
     event NewTrustedCommunity(address registeredCommunity);
     event CommunityRemovedEvent(address oldCommunity);
     event NewTrustedDateEvent(uint newDate);
@@ -89,13 +91,15 @@ contract Community {
     /**
      * @dev Register `newCommunity` with future timestamp that
      * it can be trusted.
+     * 
      *
      * emits a {NewCommunityEvent}.
      */
     function addCommunity(address newCommunity) external onlyEligible {
         registered[newCommunity] = true;
         whenToTrust[newCommunity] = block.timestamp + trustedDate;
-        emit NewCommunityEvent(newCommunity, whenToTrust[newCommunity]);
+        registeredDate[newCommunity] = block.timestamp;
+        emit NewCommunityEvent(newCommunity, registeredDate[newCommunity], whenToTrust[newCommunity]);
     }
 
     /**
