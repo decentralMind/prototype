@@ -13,11 +13,6 @@ contract PaymentGateway is VotingRemoval {
     // All the list of address registered by the given community.
     mapping(address => address[]) gatewayList;
     
-    // Total amount of burned token for the given community.
-    mapping(address => uint) totalBurnedByCommunity;
-    
-    // Total amonnt of burned token for given registered ` validGatewayAddress` address.
-    mapping(address => uint) totalPaymentGatewayBurned;
     
     /**
      * @dev Throw if address is not registered at `validGatewayAddress`.
@@ -42,7 +37,7 @@ contract PaymentGateway is VotingRemoval {
     /**
      * @dev Remove registered `gateWayAdd` address.
      */
-    function _removeGateWay(address gatewayAdd) internal isGatewayReg(gatewayAdd) {
+    function removeGateWay(address gatewayAdd) external onlyEligible isGatewayReg(gatewayAdd) {
         validGatewayAddress[gatewayAdd] = false;
     }
     

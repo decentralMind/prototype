@@ -21,6 +21,12 @@ contract ERC20 is PaymentGateway {
     
     event BurnEvent(address communityAdd, uint amount);
 
+    // Total amount of burned token for the given community.
+    mapping(address => uint) totalBurnedByCommunity;
+    
+    // Total amonnt of burned token for given registered ` validGatewayAddress` address.
+    mapping(address => uint) totalPaymentGatewayBurned;
+    
     //Should not be gateway.
     function mint(uint amount) external onlyEligible {
         balance[msg.sender] = amount;
