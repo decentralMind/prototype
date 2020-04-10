@@ -7,13 +7,13 @@ contract Community {
     address public owner;
 
     // No of total community registered.
-    uint totalCommunity;
+    uint public totalCommunity;
 
     // No of total community labeled as trusted.
-    uint trustedCommunity;
+    uint public trustedCommunity;
 
     // After 90 days community can be trusted.
-    uint trustedDate = 7776000;
+    uint public trustedDate = 7776000;
     
     // Set limit for how much token can be minted by new community.
     // Can be set to new amount by owner or through community consensus.
@@ -33,30 +33,26 @@ contract Community {
     }
 
     modifier isRegistered(address community) {
-        require(registered[community] == true);
+        require(registered[community] == true, 'Community not registered');
         _;
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner, 'Sender is not an owner');
         _;
     }
 
     modifier onlyEligible() {
         require(
             owner == msg.sender ||
-                (registered[msg.sender] && isTrusted[msg.sender])
+                (registered[msg.sender] && isTrusted[msg.sender]), 
+                'Must be owner or registered as trusted'
         );
         _;
     }
 
-    modifier isFullyAuthorized(address community) {
-        require(registered[community] == true);
-        _;
-    }
-
     modifier isAlreadyTrusted(address registeredCommunity) {
-        require(!isTrusted[registeredCommunity]);
+        require(!isTrusted[registeredCommunity], 'Community already registered');
         _;
     }
 
@@ -98,10 +94,12 @@ contract Community {
      * @dev Register `newCommunity` with future timestamp that
      * it can be trusted.
      * 
-     *
+     * Requirements:
+     * - Community should not be already registered.
      * emits a {NewCommunityEvent}.
      */
     function addCommunity(address newCommunity) external onlyEligible {
+        require(!registered[newCommunity], 'Community already registered');
         registered[newCommunity] = true;
         whenToTrust[newCommunity] = block.timestamp + trustedDate;
         registeredDate[newCommunity] = block.timestamp;
@@ -117,8 +115,8 @@ contract Community {
      * emits a {NewTrustedCommunity}
      */
     function addToTrusted(address oldCommunity) external {
-        require(registered[oldCommunity]);
-        require(whenToTrust[oldCommunity] <= block.timestamp);
+        require(registered[oldCommunity], 'Commuinity is not registered');
+        require(whenToTrust[oldCommunity] <= block.timestamp, 'Community can be only trusted after 90 days');
         isTrusted[oldCommunity] = true;
         trustedCommunity ++;
         emit NewTrustedCommunity(oldCommunity);
@@ -215,5 +213,6 @@ contract Community {
     function getTrustedDate() external view returns(uint) {
         return trustedDate;
     }
-    
+
+  
 }

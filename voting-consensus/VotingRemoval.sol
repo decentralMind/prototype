@@ -11,7 +11,7 @@ contract VotingRemoval is Community {
      * will be incharge of the smart contract.
      *
      * Removal process requires 51% voting consensus from communities
-     * regisered as trusted. {_calculateVotingRequired} is responsible for
+     * regisered as trusted. {calculateVotingRequired} is responsible for
      * calculating required number of voters.
      *
      * Currently, this contract needs at least 200 communites to be able for  the communities
@@ -75,7 +75,8 @@ contract VotingRemoval is Community {
      */
     modifier timeFrameNotActive(address sender) {
         VotingData memory vd = changeTimeFrameProposal[sender];
-        require(vd.expiryDate > block.timestamp || vd.expiryDate == 0);
+        require(vd.expiryDate > block.timestamp || vd.expiryDate == 0, 
+        'Current change time frame proposal should not be active');
         _;
     }
 
@@ -172,7 +173,7 @@ contract VotingRemoval is Community {
         vd.openBy = msg.sender;
         vd.expiryDate = block.timestamp + removalTimeFrame;
         vd.totalVote++;
-        vd.voteRequired = _calculateVotingRequired();
+        vd.voteRequired = calculateVotingRequired();
         vd.requestedTimeChange = newTimeFrame;
         vd.reason = reason;
         vd.voted[msg.sender] = true;
@@ -254,7 +255,7 @@ contract VotingRemoval is Community {
         vd.openBy = msg.sender;
         vd.reason = reason;
         vd.isOpen = true;
-        vd.voteRequired = _calculateVotingRequired();
+        vd.voteRequired = calculateVotingRequired();
         vd.voted[msg.sender] = true;
 
         removalList.push(commAdd);
@@ -323,7 +324,9 @@ contract VotingRemoval is Community {
         isOwnerRemoved
     {
         // Check if previous owner removal request is still active.
-        require(!_previousOwnerRemovalActive());
+        require(!_previousOwnerRemovalActive(),
+         'Currently owner removal proposal is active from this address');
+
         VotingData storage vd = ownerRemoval[openBy];
         vd.expiryDate = now + removalTimeFrame;
         vd.openBy = msg.sender;
@@ -331,7 +334,7 @@ contract VotingRemoval is Community {
         vd.isOpen = true;
 
         //51% of the trusted registered community consensus is required.
-        vd.voteRequired = _calculateVotingRequired();
+        vd.voteRequired = calculateVotingRequired();
         vd.voted[msg.sender] = true;
         ownerRemovalList.push(openBy);
 
@@ -378,7 +381,7 @@ contract VotingRemoval is Community {
 
         // If vote required satisfies than owner address is set to 0;
         if (vd.totalVote >= vd.voteRequired) {
-            require(_removeOwner());
+            require(_removeOwner(), 'Owner is not removed');
             vd.isRemoved = true;
         }
 
@@ -427,7 +430,7 @@ contract VotingRemoval is Community {
             return false;
         }
 
-        if (vd.expiryDate < now) {
+        if (vd.expiryDate < block.timestamp) {
             vd.isOpen = false;
             return false;
         }
@@ -454,7 +457,7 @@ contract VotingRemoval is Community {
      * 51% of total reqistered trusted community consensus is required.
      * Exactly 51% of voting number required cannot be achieved if
      * total Community modulus 100 is not equal zero, so in that case adding
-     * 1 in the {_calculateVotingRequired} gives the percentage different of
+     * 1 in the {calculateVotingRequired} gives the percentage different of
      * around 1 percent, so actualy percentage will be between 51% and 52%.
      * If more communities are added, the less the gap in the percentage difference
      * and more accuracy towards 51% target.
@@ -462,7 +465,7 @@ contract VotingRemoval is Community {
      * @return number of voting required.
      *
      */
-    function _calculateVotingRequired() private view returns (uint256) {
+    function calculateVotingRequired() public view returns (uint) {
         if (trustedCommunity % 100 == 0) {
             return _votingPercentage();
         } else {
@@ -473,23 +476,23 @@ contract VotingRemoval is Community {
     /**
      * @dev Returns 51% of total registered trusted community.
      */
-    function _votingPercentage() private view returns (uint256) {
+    function _votingPercentage() private view returns (uint) {
         return (trustedCommunity * 51) / 100;
     }
 
     /**
-     * @dev Returns {removalList} size, which contains the address of
+     * @dev Returns `removalList` size, which contains the address of
      * those who have created proposals.
      */
-    function removalListSize() public view returns (uint256) {
+    function removalListSize() public view returns (uint) {
         return removalList.length;
     }
 
     /**
-     * @dev Returns {allRemoved} size, which contains the address of
+     * @dev Returns `allRemoved` size, which contains the address of
      * communities that has been removed.
      */
-    function allRemovedSize() public view returns (uint256) {
+    function allRemovedSize() public view returns (uint) {
         return allRemoved.length;
     }
 
@@ -497,7 +500,7 @@ contract VotingRemoval is Community {
      * @dev Returns community removal creator address
      * directly through `index` access.
      */
-    function getcommunityRemovalProposaledAddress(uint256 index) public view returns (address) {
+    function getcommunityRemovalProposalAddress(uint index) public view returns (address) {
         return removalList[index];
     }
 
@@ -505,14 +508,14 @@ contract VotingRemoval is Community {
      * @dev Returns address of community which has been removed
      * directly through `index` access.
      */
-    function getRemovedAddress(uint256 index) public view returns (address) {
+    function getRemovedAddress(uint index) public view returns (address) {
         return allRemoved[index];
     }
 
     /**
      * @dev Returns length of `changeTimeFrameList`.
      */
-    function getChangeTimeFrameList() public view returns (uint256) {
+    function getChangeTimeFrameList() public view returns (uint) {
         return changeTimeFrameList.length;
     }
 
@@ -540,10 +543,17 @@ contract VotingRemoval is Community {
     function getChangeTimeFrameVoteCount(address openBy)
         public
         view
-        returns (uint256)
+        returns (uint)
     {
         VotingData storage vd = changeTimeFrameProposal[openBy];
         return vd.totalVote;
+    }
+
+    /**
+     * @dev Returns `changeTimeFrameSuccess` length.
+     */
+    function getChangeTimeFrameSuccessLength() external view returns(uint) {
+        return changeTimeFrameSuccess.length;
     }
 
     /**
@@ -552,7 +562,7 @@ contract VotingRemoval is Community {
     function getCommunityRemovalVote(address removalCommunity)
         public
         view
-        returns (uint256)
+        returns (uint)
     {
         VotingData storage vd = communityRemovalProposal[removalCommunity];
         return vd.totalVote;
@@ -564,20 +574,6 @@ contract VotingRemoval is Community {
     function getCommunityNumber() public view returns (uint256) {
         return communityNumber;
     }
-
-    // struct VotingData {
-    bool isOpen;
-    bool isRemoved;
-    address openBy;
-    uint256 expiryDate;
-    uint256 totalVote;
-    uint256 voteRequired;
-    // `requestedTimeChange` is only used when rquesting removal time frame, removalTimeFrame.
-    uint256 requestedTimeChange;
-    bytes reason;
-
-    //     mapping(address => bool) voted;
-    // }
 
     function getTimeFrameChangeData(address createdBy)
         public
@@ -605,7 +601,6 @@ contract VotingRemoval is Community {
             vd.reason
         );
     }
-
 
      function getCommunityRemovalData(address community)
         public
