@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./Community.sol";
 
+
 contract VotingRemoval is Community {
     /**
      * @dev Voting system for removal of community members and owner
@@ -13,15 +14,15 @@ contract VotingRemoval is Community {
      * regisered as trusted. {_calculateVotingRequired} is responsible for
      * calculating required number of voters.
      *
-     * Currently, 200 trusted registered communites is set to allow for
-     * voting. This number be changed by owner anytime.
+     * Currently, this contract needs at least 200 communites to be able for  the communities
+     * to take control it. This number can be changed by owner anytime.
      */
 
     //Main format for storing voting data.
     struct VotingData {
         bool isOpen;
         bool isRemoved;
-        address openedBy;
+        address openBy;
         uint256 expiryDate;
         uint256 totalVote;
         uint256 voteRequired;
@@ -33,15 +34,15 @@ contract VotingRemoval is Community {
 
     // Community removal proposals with address of proposed community to be removed.
     // map to data.
-    mapping(address => VotingData) redList;
+    mapping(address => VotingData) communityRemovalProposal;
 
     // Record the address of proposals.
-    // Will be used to get voting data from `redList` mapping.
+    // Will be used to get voting data from `communityRemovalProposal` mapping.
     address[] removalList;
 
     // All community removed address.
     address[] allRemoved;
-    
+
     // Voting open for 5 days.
     uint256 public removalTimeFrame = 432000;
 
@@ -50,11 +51,14 @@ contract VotingRemoval is Community {
     uint256 communityNumber = 200;
 
     // Expiry date change proposals with address of proposals mapped to voting data.
-    mapping(address => VotingData) changeTimeFrame;
-    
+    mapping(address => VotingData) changeTimeFrameProposal;
+
     // Address of those who have put proposal to change time.
     address[] changeTimeFrameList;
-    
+
+    // Address of those whose time frame proposals was success.
+    address[] changeTimeFrameSuccess;
+
     // Owner removal proposals with address of proposals mapped with voting data.
     mapping(address => VotingData) ownerRemoval;
 
@@ -63,22 +67,23 @@ contract VotingRemoval is Community {
 
     // Set true if owner is successfully removed.
     bool ownerRemoved;
-    
+
     /**
      * @dev Throw if change time frame proposal already expired.
      * Inactive time frame proposal set expiry date to 0 by default.
      * Check for expired time frame proposal.
      */
     modifier timeFrameNotActive(address sender) {
-        VotingData memory vd = changeTimeFrame[sender];
+        VotingData memory vd = changeTimeFrameProposal[sender];
         require(vd.expiryDate > block.timestamp || vd.expiryDate == 0);
         _;
     }
+
     /**
      * @dev Throw if current voting proposal is not opened.
      */
     modifier alreadyListed(address commAdd) {
-        VotingData memory vd = redList[commAdd];
+        VotingData memory vd = communityRemovalProposal[commAdd];
         require(
             !vd.isOpen,
             "Voting proposal is not open, either it closed or has not been registered"
@@ -91,9 +96,9 @@ contract VotingRemoval is Community {
      * by the given community has expired or not open.
      */
     modifier timeFrameRegistered(address openBy) {
-        VotingData memory vd = changeTimeFrame[openBy];
+        VotingData memory vd = changeTimeFrameProposal[openBy];
         require(
-            vd.isOpen,
+            vd.isOpen && vd.expiryDate > block.timestamp,
             "Current expiry date change proposal already expired or not registerd"
         );
         _;
@@ -124,7 +129,7 @@ contract VotingRemoval is Community {
     event VotingDataEvent(
         bool isOpen,
         bool isRemoved,
-        address openedBy,
+        address openBy,
         uint256 expiryDate,
         uint256 totalVote,
         uint256 voteRequired,
@@ -136,8 +141,8 @@ contract VotingRemoval is Community {
 
     /**
      *@dev Assign minimum `newNumber` requirement for registered communities before
-     * allowing them to open proposals and voting. 
-     * 
+     * allowing them to open proposals and voting.
+     *
      * emits a {CommunityNumberEvent}
      */
     function changeCommunityNumber(uint256 newNumber) external onlyOwner {
@@ -160,25 +165,25 @@ contract VotingRemoval is Community {
         public
         onlyEligible
         timeFrameNotActive(msg.sender)
-        // sufficientCommunityNumber
+        sufficientCommunityNumber
     {
-        VotingData storage vd = changeTimeFrame[msg.sender];
+        VotingData storage vd = changeTimeFrameProposal[msg.sender];
         vd.isOpen = true;
-        vd.openedBy = msg.sender;
+        vd.openBy = msg.sender;
         vd.expiryDate = block.timestamp + removalTimeFrame;
         vd.totalVote++;
         vd.voteRequired = _calculateVotingRequired();
         vd.requestedTimeChange = newTimeFrame;
         vd.reason = reason;
         vd.voted[msg.sender] = true;
-        
+
         // Store the array the list.
         changeTimeFrameList.push(msg.sender);
 
         emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
-            vd.openedBy,
+            vd.openBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
@@ -188,7 +193,7 @@ contract VotingRemoval is Community {
     }
 
     /**
-     * @dev Vote to reset expiry date proposal `openedBy' given community.
+     * @dev Vote to reset expiry date proposal `openBy' given community.
      *
      * Requirements:
      * - Current proposal should be active.
@@ -197,13 +202,13 @@ contract VotingRemoval is Community {
      *
      * emits a {VotingDataEvent}.
      */
-    function voteToChangeTimeFrame(address openedBy)
+    function voteToChangeTimeFrame(address openBy)
         public
-        timeFrameRegistered(openedBy)
+        timeFrameRegistered(openBy)
         onlyEligible
         sufficientCommunityNumber
     {
-        VotingData storage vd = changeTimeFrame[openedBy];
+        VotingData storage vd = changeTimeFrameProposal[openBy];
         // Increaset total vote.
         vd.totalVote++;
         // Registered voted address.
@@ -214,12 +219,13 @@ contract VotingRemoval is Community {
             vd.isOpen = false;
             vd.isRemoved = true;
             removalTimeFrame = vd.requestedTimeChange;
+            changeTimeFrameSuccess.push(openBy);
         }
 
         emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
-            vd.openedBy,
+            vd.openBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
@@ -243,9 +249,9 @@ contract VotingRemoval is Community {
         alreadyListed(commAdd)
         sufficientCommunityNumber
     {
-        VotingData storage vd = redList[commAdd];
+        VotingData storage vd = communityRemovalProposal[commAdd];
         vd.expiryDate = now + removalTimeFrame;
-        vd.openedBy = msg.sender;
+        vd.openBy = msg.sender;
         vd.reason = reason;
         vd.isOpen = true;
         vd.voteRequired = _calculateVotingRequired();
@@ -256,7 +262,7 @@ contract VotingRemoval is Community {
         emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
-            vd.openedBy,
+            vd.openBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
@@ -275,9 +281,9 @@ contract VotingRemoval is Community {
      * emits a {VotingDataEvent}.
      */
     function voteForCommunityRemoval(address commAdd) external onlyEligible {
-        VotingData storage vd = redList[commAdd];
-        require(vd.isOpen);
-        require(!vd.voted[msg.sender]);
+        VotingData storage vd = communityRemovalProposal[commAdd];
+        // require(vd.isOpen);
+        // require(!vd.voted[msg.sender]);
         vd.voted[msg.sender] = true;
         vd.expiryDate = block.timestamp + removalTimeFrame;
         vd.totalVote++;
@@ -291,7 +297,7 @@ contract VotingRemoval is Community {
         emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
-            vd.openedBy,
+            vd.openBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
@@ -320,7 +326,7 @@ contract VotingRemoval is Community {
         require(!_previousOwnerRemovalActive());
         VotingData storage vd = ownerRemoval[openBy];
         vd.expiryDate = now + removalTimeFrame;
-        vd.openedBy = msg.sender;
+        vd.openBy = msg.sender;
         vd.reason = reason;
         vd.isOpen = true;
 
@@ -332,7 +338,7 @@ contract VotingRemoval is Community {
         emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
-            vd.openedBy,
+            vd.openBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
@@ -379,7 +385,7 @@ contract VotingRemoval is Community {
         emit VotingDataEvent(
             vd.isOpen,
             vd.isRemoved,
-            vd.openedBy,
+            vd.openBy,
             vd.expiryDate,
             vd.totalVote,
             vd.voteRequired,
@@ -491,7 +497,7 @@ contract VotingRemoval is Community {
      * @dev Returns community removal creator address
      * directly through `index` access.
      */
-    function getRedListedAddress(uint256 index) public view returns (address) {
+    function getcommunityRemovalProposaledAddress(uint256 index) public view returns (address) {
         return removalList[index];
     }
 
@@ -502,34 +508,129 @@ contract VotingRemoval is Community {
     function getRemovedAddress(uint256 index) public view returns (address) {
         return allRemoved[index];
     }
-    
-     /**
+
+    /**
      * @dev Returns length of `changeTimeFrameList`.
      */
-    function getChangeTimeFrameList() public view returns (uint) {
-        changeTimeFrameList.length;
+    function getChangeTimeFrameList() public view returns (uint256) {
+        return changeTimeFrameList.length;
     }
-    
+
     /**
      * @dev Returns true if change time frame proposal is open and vice versa.
      */
-    function isTimeFrameProposalOpen() public view returns(bool) {
-        VotingData memory vd = changeTimeFrame[msg.sender];
-    
+    function isTimeFrameProposalOpen(address openBy)
+        public
+        view
+        returns (bool)
+    {
+        VotingData memory vd = changeTimeFrameProposal[openBy];
+
         // Checks if proposal is open.
         // Checks if proposal already expired.
-        if(!vd.isOpen || vd.expiryDate <= block.timestamp) {
+        if (!vd.isOpen || vd.expiryDate <= block.timestamp) {
             return false;
-        } 
-
+        }
         return true;
     }
 
     /**
-    * @dev Returns `communityNumber`.
-    */
-    function getCommunityNumber() public view returns(uint) {
+     * @dev Returns total voting receiver for Tiem frame change proposal.
+     */
+    function getChangeTimeFrameVoteCount(address openBy)
+        public
+        view
+        returns (uint256)
+    {
+        VotingData storage vd = changeTimeFrameProposal[openBy];
+        return vd.totalVote;
+    }
+
+    /**
+     * @dev Returns total voting receiver for Tiem frame change proposal.
+     */
+    function getCommunityRemovalVote(address removalCommunity)
+        public
+        view
+        returns (uint256)
+    {
+        VotingData storage vd = communityRemovalProposal[removalCommunity];
+        return vd.totalVote;
+    }
+
+    /**
+     * @dev Returns `communityNumber`.
+     */
+    function getCommunityNumber() public view returns (uint256) {
         return communityNumber;
     }
-    
+
+    // struct VotingData {
+    bool isOpen;
+    bool isRemoved;
+    address openBy;
+    uint256 expiryDate;
+    uint256 totalVote;
+    uint256 voteRequired;
+    // `requestedTimeChange` is only used when rquesting removal time frame, removalTimeFrame.
+    uint256 requestedTimeChange;
+    bytes reason;
+
+    //     mapping(address => bool) voted;
+    // }
+
+    function getTimeFrameChangeData(address createdBy)
+        public
+        view
+        returns (
+            bool getIsOpen,
+            bool getIsRemoved,
+            address getOpenBy,
+            uint256 getExpiryDate,
+            uint256 getTotalVote,
+            uint256 getVoteRequired,
+            uint256 getRequestedTimeChange,
+            bytes memory getReason
+        )
+    {
+        VotingData memory vd = changeTimeFrameProposal[createdBy];
+        return (
+            vd.isOpen,
+            vd.isRemoved,
+            vd.openBy,
+            vd.expiryDate,
+            vd.totalVote,
+            vd.voteRequired,
+            vd.requestedTimeChange,
+            vd.reason
+        );
+    }
+
+
+     function getCommunityRemovalData(address community)
+        public
+        view
+        returns (
+            bool getIsOpen,
+            bool getIsRemoved,
+            address getOpenBy,
+            uint256 getExpiryDate,
+            uint256 getTotalVote,
+            uint256 getVoteRequired,
+            uint256 getRequestedTimeChange,
+            bytes memory getReason
+        )
+    {
+        VotingData memory vd = communityRemovalProposal[community];
+        return (
+            vd.isOpen,
+            vd.isRemoved,
+            vd.openBy,
+            vd.expiryDate,
+            vd.totalVote,
+            vd.voteRequired,
+            vd.requestedTimeChange,
+            vd.reason
+        );
+    }
 }
