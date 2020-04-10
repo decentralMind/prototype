@@ -37,7 +37,7 @@ contract PaymentGateway is VotingRemoval {
     /**
      * @dev Remove registered `gateWayAdd` address.
      */
-    function removeGateWay(address gatewayAdd) external onlyEligible isGatewayReg(gatewayAdd) {
+    function removeGateway(address gatewayAdd) external onlyEligible isGatewayReg(gatewayAdd) {
         validGatewayAddress[gatewayAdd] = false;
     }
     
