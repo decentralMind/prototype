@@ -28,17 +28,21 @@ contract ERC20 is PaymentGateway {
     
     // Total amount of burned token for given registered ` validGatewayAddress` address.
     mapping(address => uint) totalPaymentGatewayBurned;
+
+    uint public tokenLimit = 20000;
     
     /**
     * @dev Create new token of `amount` into the contract.
     * Requirements:
     * -It cannot be address which is regstered as payment gateway,
     * check PaymentGateway.sol .
-    *
+    * - New token creation limit is set to `tokenLimit` .
+    * 
     * emits {MintEvent}
     */
     function mint(uint amount) external onlyEligible {
-        require(!paymentGatewayRegistered[msg.sender]);
+        require(amount <= 20000, 'Token amount exceed than restricted amount');
+        require(!paymentGatewayRegistered(msg.sender));
         balance[msg.sender] = amount;
         totalSupply += amount;
         emit MintEvent(msg.sender, amount);
@@ -52,7 +56,7 @@ contract ERC20 is PaymentGateway {
      * emits {TransferEvent}.
      */
     function transfer(uint amount, address receiver) external onlyEligible {
-        require(amount >= balance[msg.sender]);
+        require(balance[msg.sender] >= amount, 'Insuffcient balance.');
         
         if(paymentGatewayRegistered(receiver)) {
             _gatewayPayment(msg.sender, receiver, amount);
@@ -73,7 +77,6 @@ contract ERC20 is PaymentGateway {
         totalPaymentGatewayBurned[gatewayAdd] += amount;
     }
 
-    
     /**
      * @dev Get `receiver` token balance.
      * @return uint256, balance of receiver.
@@ -86,8 +89,17 @@ contract ERC20 is PaymentGateway {
      * @dev Destroy `amount` of token of given address `communityAdd`.
      * emits {BurnEvent} .
      */
-    function _burn(address communityAdd, uint amount) internal {
+    function _burn(address communityAdd, uint amount) private {
         balance[communityAdd] -= amount;
+        totalSupply -= amount;
         emit BurnEvent(communityAdd, amount);
+    }
+
+    /**
+     *@dev Returns `totalSupply`.
+     *
+     */
+    function getTotalSupply() external view returns(uint) {
+        return totalSupply;
     }
 }

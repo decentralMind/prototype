@@ -13,7 +13,6 @@ contract PaymentGateway is VotingRemoval {
     // All the list of address registered by the given community.
     mapping(address => address[]) gatewayList;
     
-    
     /**
      * @dev Throw if address is not registered at `validGatewayAddress`.
      */
