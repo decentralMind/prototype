@@ -2,7 +2,6 @@ pragma solidity ^0.5.0;
 
 import "./Community.sol";
 
-
 contract VotingRemoval is Community {
     /**
      * @dev Voting system for removal of community members and owner

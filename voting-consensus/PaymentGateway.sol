@@ -1,31 +1,73 @@
 pragma solidity ^0.5.0;
 
-import './ERC20.sol';
+import './VotingRemoval.sol';
 
-contract PaymentGateway is ERC20 {
+contract PaymentGateway is VotingRemoval {
     
-    mapping(address => bool) setGatewayAdd;
+    // New payment address is set to true.
+    mapping(address => bool) validGatewayAddress;
     
-    mapping(address => address) gatewayAddList;
-
-    modifier isGateywayReg(address gateway) {
-        require(setGatewayAdd[gateway]);
+    // New address is mapped to community.
+    mapping(address => address) gatewayToCommunity;
+    
+    // All the list of address registered by the given community.
+    mapping(address => address[]) gatewayList;
+    
+    // Total amount of burned token for the given community.
+    mapping(address => uint) totalBurnedByCommunity;
+    
+    // Total amonnt of burned token for given registered ` validGatewayAddress` address.
+    mapping(address => uint) totalPaymentGatewayBurned;
+    
+    /**
+     * @dev Throw if address is not registered at `validGatewayAddress`.
+     */
+    modifier isGatewayReg(address gateway) {
+        require(validGatewayAddress[gateway]);
         _;
     }
     
+    /**
+     * @dev Communities needs to `registerGateway` address  if they
+     * want to receive payment.
+     * 
+     */
     function registerGateway(address gatewayAdd) external onlyEligible {
-        require(!setGatewayAdd[gatewayAdd]);
-        gatewayAddList[msg.sender] = gatewayAdd;
-        setGatewayAdd[gatewayAdd] = true;
+        require(!validGatewayAddress[gatewayAdd]);
+        gatewayToCommunity[gatewayAdd] = msg.sender;
+        validGatewayAddress[gatewayAdd] = true;
+        gatewayList[msg.sender].push(gatewayAdd);
     }
     
-    function receivePayment(address receiver, uint amount) external {
-        require(setGatewayAdd[receiver]);
-        _burn(gatewayAddList[receiver], amount);
+    /**
+     * @dev Remove registered `gateWayAdd` address.
+     */
+    function _removeGateWay(address gatewayAdd) internal isGatewayReg(gatewayAdd) {
+        validGatewayAddress[gatewayAdd] = false;
+    }
+    
+     /**
+     * @dev Remove registered `gateWayAdd` address.
+     */
+    function paymentGatewayRegistered(address receiver) public view returns(bool) {
+        return validGatewayAddress[receiver];
+    }
+    
+    /**
+     * @dev Returns length of respective `gatewayList` of given `community`.
+     */
+    function getGetwayListLength(address community) public view returns(uint) {
+        return gatewayList[community].length;
+    }
+    
+    /**
+     * @dev Returns registered address as payment gateway by `community` by provided `index`.
+     */
+    function accessGatewayList(address community, uint index) public view returns(address) {
+        return gatewayList[community][index];
     }
 
-    function removeGateWay(address gatewayAdd) external  isGateywayReg(gatewayAdd) {
-        setGatewayAdd[gatewayAdd] = false;
-    }
 }
+
+
 
