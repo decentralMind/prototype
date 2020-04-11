@@ -11,6 +11,15 @@ import './PaymentGateway.sol';
 
 contract ERC20 is PaymentGateway {
     
+    string public name;
+    string public symbol;
+    uint8 public constant decimals = 10;
+    
+    constructor(string memory ERC20name, string memory ERC20symbol) public {
+        name = ERC20name;
+        symbol = ERC20symbol;
+    }
+    
     // Balance mapped to receiver address.
     mapping(address => uint) balance;
     
@@ -30,6 +39,8 @@ contract ERC20 is PaymentGateway {
     mapping(address => uint) totalPaymentGatewayBurned;
 
     uint public tokenLimit = 20000;
+    
+    
     
     /**
     * @dev Create new token of `amount` into the contract.

@@ -15,7 +15,7 @@ contract voteToChangeTimeFrame {
     }
 
     function successfullyVoteToChangeTimeFrame() public {
-        vr.openVoteTimeFrame(3, '0xff');
+        vr.openVoteTimeFrame(3, 'Some reason');
         vr.voteToChangeTimeFrame(deployAdd);
         ( 
         bool isOpen,

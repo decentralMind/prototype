@@ -27,7 +27,7 @@ contract VotingRemoval is Community {
         uint256 voteRequired;
         // `requestedTimeChange` is only used when rquesting removal time frame, removalTimeFrame.
         uint256 requestedTimeChange;
-        bytes reason;
+        string reason;
         mapping(address => bool) voted;
     }
 
@@ -134,7 +134,7 @@ contract VotingRemoval is Community {
         uint256 totalVote,
         uint256 voteRequired,
         uint256 newTimeFrame,
-        bytes reason
+        string reason
     );
 
     event CommunityNumberEvent(uint256 newNumber);
@@ -161,7 +161,7 @@ contract VotingRemoval is Community {
      *
      * emits a {VotingDataEvent}.
      */
-    function openVoteTimeFrame(uint256 newTimeFrame, bytes memory reason)
+    function openVoteTimeFrame(uint256 newTimeFrame, string memory reason)
         public
         onlyEligible
         timeFrameNotActive(msg.sender)
@@ -243,7 +243,7 @@ contract VotingRemoval is Community {
      *
      * emits a {VotingDataEvent}.
      */
-    function openCommunityRemoval(address commAdd, bytes memory reason)
+    function openCommunityRemoval(address commAdd, string memory reason)
         public
         onlyEligible
         alreadyListed(commAdd)
@@ -316,7 +316,7 @@ contract VotingRemoval is Community {
      *
      * emits a {VotingDataEvent}
      */
-    function requestOwnerRemoval(address openBy, bytes calldata reason)
+    function requestOwnerRemoval(address openBy, string calldata reason)
         external
         onlyEligible
         sufficientCommunityNumber
@@ -585,7 +585,7 @@ contract VotingRemoval is Community {
             uint256 getTotalVote,
             uint256 getVoteRequired,
             uint256 getRequestedTimeChange,
-            bytes memory getReason
+            string memory getReason
         )
     {
         VotingData memory vd = changeTimeFrameProposal[createdBy];
@@ -612,7 +612,7 @@ contract VotingRemoval is Community {
             uint256 getTotalVote,
             uint256 getVoteRequired,
             uint256 getRequestedTimeChange,
-            bytes memory getReason
+            string memory getReason
         )
     {
         VotingData memory vd = communityRemovalProposal[community];

@@ -18,7 +18,7 @@ contract OpenVotingChange {
     }
     
     function successfullyOpenProposalToChangeTimeFrame() public {
-         vr.openVoteTimeFrame(3, "0xff");
+         vr.openVoteTimeFrame(3, "Some reason");
         ( 
         bool isOpen,
         bool isRemoved,
