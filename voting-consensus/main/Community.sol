@@ -150,44 +150,6 @@ contract Community  {
         _trustedCommunity++;
     }
 
-    // /**
-    //  * @dev Owner directly remove `oldCommunity`.
-    //  * Requirements:
-    //  * - Must be owner
-    //  * - Community shoud already be registered.
-    //  */
-    // function directlyRemoveCommunity(address oldCommunity) external onlyOwner {
-       
-    //     _removeCommunity(oldCommunity);
-    //     assert(
-    //         _registered[oldCommunity] == false &&
-    //             _isTrusted[oldCommunity] == false
-    //     );
-    // }
-
-    // /**
-    //  * @dev Removes already Registered `oldCommunity`
-    //  *
-    //  * Requirements:
-    //  * - Community shoud be already registered.
-    //  * - Only be called by trusted communities.
-    //  *
-    //  * emits a {CommunityRemovedEvent}
-    //  */
-    // function _removeCommunity(address oldCommunity)
-    //     internal
-    //     isRegistered(oldCommunity)
-    // {
-    //     _registered[oldCommunity] = false;
-    //     _totalCommunity -= 1;
-
-    //     if (_isTrusted[oldCommunity]) {
-    //         _isTrusted[oldCommunity] = false;
-    //         _trustedCommunity -= 1;
-    //     }
-    //     emit CommunityRemovedEvent(oldCommunity);
-    // }
-
     /**
      * @dev Set `trustedDate` to `newDate`.
      * Requirement:
