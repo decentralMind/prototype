@@ -290,8 +290,10 @@ contract VotingRemoval is Community {
 
         // Remove community member if voting required target is met.
         if (vd.totalVote >= vd.voteRequired) {
-            _removeCommunity(commAdd);
+            vd.isOpen = false;
+            vd.isRemoved = true;
             allRemoved.push(commAdd);
+            _removeCommunity(commAdd);
         }
 
         emit VotingDataEvent(
