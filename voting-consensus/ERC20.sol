@@ -40,8 +40,6 @@ contract ERC20 is PaymentGateway {
 
     uint public tokenLimit = 20000;
     
-    
-    
     /**
     * @dev Create new token of `amount` into the contract.
     * Requirements:
@@ -89,14 +87,6 @@ contract ERC20 is PaymentGateway {
     }
 
     /**
-     * @dev Get `receiver` token balance.
-     * @return uint256, balance of receiver.
-     */
-    function getBalance(address receiver) external view returns(uint) {
-        return balance[receiver];
-    }
-    
-    /**
      * @dev Destroy `amount` of token of given address `communityAdd`.
      * emits {BurnEvent} .
      */
@@ -112,5 +102,13 @@ contract ERC20 is PaymentGateway {
      */
     function getTotalSupply() external view returns(uint) {
         return totalSupply;
+    }
+
+    /**
+     * @dev Get balance of `tokenOwner`.
+     * @return uint256, balance of receiver.
+     */
+    function balanceOf(address tokenOwner) public view returns (uint) {
+        return balance[tokenOwner];
     }
 }
