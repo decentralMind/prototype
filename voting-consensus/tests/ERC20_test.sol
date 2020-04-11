@@ -12,7 +12,7 @@ contract ERC20Test {
     address acc1;
 
     function beforeAll() public {
-        erc = new ERC20("Nity", "NTY");
+        erc = new ERC20();
         acc0 = TestsAccounts.getAccount(0);
         acc1 = TestsAccounts.getAccount(1);
         deployAdd = address(this);

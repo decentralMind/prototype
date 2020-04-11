@@ -76,9 +76,5 @@ contract CommunityTest {
     function shouldReturnFalseForNonRegisteredCommunity() public {
         Assert.equal(cmt.checkIfRegistered(acc2), false, "Should return false");
     }
-
-    function shouldRemoveAccountSuccessfullyByOwner() public {
-        cmt.directlyRemoveCommunity(acc0);
-        Assert.equal(cmt.checkIfRegistered(acc0), false, "Should return false");
-    }
+    
 }
