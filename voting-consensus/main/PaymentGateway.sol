@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
-import './Community.sol';
+import "./Community.sol";
+
 
 contract PaymentGateway is Community {
     // New payment address is set to true.

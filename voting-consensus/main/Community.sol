@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
-contract Community  {
+
+contract Community {
     // Deployer of the address is automatically set to owner.
     address public owner;
 

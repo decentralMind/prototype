@@ -76,5 +76,4 @@ contract CommunityTest {
     function shouldReturnFalseForNonRegisteredCommunity() public {
         Assert.equal(cmt.checkIfRegistered(acc2), false, "Should return false");
     }
-    
 }

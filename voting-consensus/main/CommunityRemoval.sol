@@ -1,7 +1,8 @@
 pragma solidity ^0.5.0;
 
-import './Community.sol';
-import './ERC20.sol';
+import "./Community.sol";
+import "./ERC20.sol";
+
 
 contract CommunityRemoval is Community, ERC20 {
     /**
@@ -12,10 +13,10 @@ contract CommunityRemoval is Community, ERC20 {
      * - Community shoud already be registered.
      */
     function directlyRemoveCommunity(address oldCommunity) external onlyOwner {
-        if(balanceOf(oldCommunity) > 0) {
+        if (balanceOf(oldCommunity) > 0) {
             _burn(oldCommunity, balanceOf(oldCommunity));
         }
-        
+
         _removeCommunity(oldCommunity);
         assert(
             _registered[oldCommunity] == false &&
@@ -39,11 +40,11 @@ contract CommunityRemoval is Community, ERC20 {
     {
         _registered[oldCommunity] = false;
         _totalCommunity -= 1;
-        
-         if(balanceOf(oldCommunity) > 0) {
+
+        if (balanceOf(oldCommunity) > 0) {
             _burn(oldCommunity, balanceOf(oldCommunity));
         }
-        
+
         if (_isTrusted[oldCommunity]) {
             _isTrusted[oldCommunity] = false;
             _trustedCommunity -= 1;

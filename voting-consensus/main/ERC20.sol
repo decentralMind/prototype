@@ -1,5 +1,7 @@
 pragma solidity ^0.5.0;
 import "./PaymentGateway.sol";
+
+
 /**
  * @title ERC20
  * @dev ERC20 token system.
@@ -95,7 +97,7 @@ contract ERC20 is PaymentGateway {
     function getTotalSupply() external view returns (uint256) {
         return _totalSupply;
     }
-    
+
     /**
      * @dev Get balance of `tokenOwner`.
      * @return uint256, balance of receiver.

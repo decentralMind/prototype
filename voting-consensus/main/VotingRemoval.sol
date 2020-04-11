@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
+import "./CommunityRemoval.sol";
 
-import './CommunityRemoval.sol';
 
 contract VotingRemoval is CommunityRemoval {
     /**

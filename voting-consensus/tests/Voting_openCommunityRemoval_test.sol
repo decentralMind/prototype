@@ -16,20 +16,24 @@ contract CommunityRemovalTest {
         acc0 = TestsAccounts.getAccount(0);
         acc1 = TestsAccounts.getAccount(1);
         deployAdd = address(this);
-       
+
         vr.addCommunity(acc1);
         vr.directlyTrustedByOwner(acc1);
 
         vr.changeCommunityNumber(1);
-        
+
         vr.mint(100);
         vr.transfer(50, acc1);
     }
 
     function shouldSuccessfullyTransferTheBalance() public {
-        Assert.equal(vr.balanceOf(acc1), 50, 'Account must be loaded wtih correct balance.');
+        Assert.equal(
+            vr.balanceOf(acc1),
+            50,
+            "Account must be loaded wtih correct balance."
+        );
     }
-    
+
     function shouldSuccessfullyOpenCommunityRemovalProposal() public {
         string memory someReason = "Create token against community will";
         vr.openCommunityRemoval(acc1, someReason);
@@ -97,8 +101,12 @@ contract CommunityRemovalTest {
             "Commuinity shoudl be removed from tusted list."
         );
     }
-    
+
     function shouldAlsoRemoveTotalSupplyBalanceIfAddressHadBalance() public {
-        Assert.equal(vr.getTotalSupply(), 50, 'Total supply must be removed correctly.');
+        Assert.equal(
+            vr.getTotalSupply(),
+            50,
+            "Total supply must be removed correctly."
+        );
     }
 }
