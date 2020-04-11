@@ -189,14 +189,14 @@ contract Community {
     /**
      * @dev Returns true if `community` is regisitered and vice versa.
      */
-    function checkIfRegistered(address community) external view returns(bool){
+    function checkIfRegistered(address community) public view returns(bool){
         return registered[community];
     }
     
     /**
      * @dev Returns true if `community` is trusted and vice versa.
      */
-    function checkIfTrusted(address community) external view returns(bool){
+    function checkIfTrusted(address community) public view returns(bool){
         return isTrusted[community];
     }
     

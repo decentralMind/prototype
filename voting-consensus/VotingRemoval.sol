@@ -209,7 +209,7 @@ contract VotingRemoval is Community {
         sufficientCommunityNumber
     {
         VotingData storage vd = changeTimeFrameProposal[openBy];
-        // Increaset total vote.
+        // Increase total vote.
         vd.totalVote++;
         // Registered voted address.
         vd.voted[msg.sender] = true;
