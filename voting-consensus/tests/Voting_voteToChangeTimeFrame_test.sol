@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 import "remix_tests.sol";
 import "remix_accounts.sol";
-import "../VotingRemoval.sol";
+import "../main/VotingRemoval.sol";
 
 
 contract voteToChangeTimeFrame {
@@ -15,22 +15,27 @@ contract voteToChangeTimeFrame {
     }
 
     function successfullyVoteToChangeTimeFrame() public {
-        vr.openVoteTimeFrame(3, 'Some reason');
+        vr.openVoteTimeFrame(3, "Some reason");
         vr.voteToChangeTimeFrame(deployAdd);
-        ( 
-        bool isOpen,
-        bool isRemoved,
-        address openBy,
-        uint expiryDate,
-        uint totalVote,
-        uint voteRequired,
-        uint requestedTimeChange,
+        (
+            bool isOpen,
+            bool isRemoved,
+            address openBy,
+            uint256 expiryDate,
+            uint256 totalVote,
+            uint256 voteRequired,
+            uint256 requestedTimeChange,
+
         ) = vr.getTimeFrameChangeData(deployAdd);
 
-        Assert.equal(isOpen, false, 'Should be true.');
-        Assert.equal(isRemoved, true, 'Should be false.');
-        Assert.equal(totalVote, 2, 'Total vote should be 2.');
-        
-        Assert.equal(vr.getChangeTimeFrameSuccessLength(), 1, 'changeTimeFrameSuccess length must be 1.');
+        Assert.equal(isOpen, false, "Should be true.");
+        Assert.equal(isRemoved, true, "Should be false.");
+        Assert.equal(totalVote, 2, "Total vote should be 2.");
+
+        Assert.equal(
+            vr.getChangeTimeFrameSuccessLength(),
+            1,
+            "changeTimeFrameSuccess length must be 1."
+        );
     }
 }

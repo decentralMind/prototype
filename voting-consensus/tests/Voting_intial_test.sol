@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 import "remix_tests.sol";
 import "remix_accounts.sol";
-import "../VotingRemoval.sol";
+import "../main/VotingRemoval.sol";
 
 
 contract InitalTest {
@@ -57,5 +57,4 @@ contract InitalTest {
             "acc1 should be listed as trusted"
         );
     }
-    
 }
