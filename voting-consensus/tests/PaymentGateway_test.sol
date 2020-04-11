@@ -21,8 +21,6 @@ contract PaymentGatewayTest {
     function successfullyRegisterPaymentGatewayAddress() public {
         pg.registerGateway(acc2);
         Assert.equal(pg.paymentGatewayRegistered(acc2), true, 'Address should be successfully registered');
-        Assert.equal(pg.getGetwayListLength(deployAdd), 1, 'Should only increment to one');
-        Assert.equal(pg.accessGatewayList(deployAdd, 0), acc2, 'Correctly update the list by registered new address');
     }
     
     function shouldFailIfRegisteredCommunityAdddressIsProvided() public {

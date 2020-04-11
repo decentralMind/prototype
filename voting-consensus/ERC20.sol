@@ -13,7 +13,7 @@ contract ERC20 is PaymentGateway {
     
     string public name;
     string public symbol;
-    uint8 public constant decimals = 10;
+    uint8 public constant decimals = 18;
     
     constructor(string memory ERC20name, string memory ERC20symbol) public {
         name = ERC20name;
@@ -21,10 +21,10 @@ contract ERC20 is PaymentGateway {
     }
     
     // Balance mapped to receiver address.
-    mapping(address => uint) balance;
+    mapping(address => uint) private _balance;
     
     // Total amount of minted coins.
-    uint totalSupply;
+    uint private _totalSupply;
     
     event MintEvent(address minter, uint amount);
     
@@ -33,27 +33,24 @@ contract ERC20 is PaymentGateway {
     event BurnEvent(address communityAdd, uint amount);
 
     // Total amount of burned token for the given community.
-    mapping(address => uint) totalBurnedByCommunity;
+    mapping(address => uint) private _totalBurnedByCommunity;
     
     // Total amount of burned token for given registered ` validGatewayAddress` address.
-    mapping(address => uint) totalPaymentGatewayBurned;
-
-    uint public tokenLimit = 20000;
+    mapping(address => uint) private _totalPaymentGatewayBurned;
     
     /**
     * @dev Create new token of `amount` into the contract.
     * Requirements:
     * -It cannot be address which is regstered as payment gateway,
     * check PaymentGateway.sol .
-    * - New token creation limit is set to `tokenLimit` .
     * 
     * emits {MintEvent}
     */
+    
     function mint(uint amount) external onlyEligible {
-        require(amount <= 20000, 'Token amount exceed than restricted amount');
         require(!paymentGatewayRegistered(msg.sender));
-        balance[msg.sender] = amount;
-        totalSupply += amount;
+        _balance[msg.sender] = amount;
+        _totalSupply += amount;
         emit MintEvent(msg.sender, amount);
     }
     
@@ -65,13 +62,13 @@ contract ERC20 is PaymentGateway {
      * emits {TransferEvent}.
      */
     function transfer(uint amount, address receiver) external onlyEligible {
-        require(balance[msg.sender] >= amount, 'Insuffcient balance.');
+        require(_balance[msg.sender] >= amount, 'Insuffcient balance.');
         
         if(paymentGatewayRegistered(receiver)) {
             _gatewayPayment(msg.sender, receiver, amount);
         } else {
-             balance[msg.sender] -= amount;
-             balance[receiver] += amount;
+             _balance[msg.sender] -= amount;
+             _balance[receiver] += amount;
         }
         emit TransferEvent(msg.sender, receiver, amount);
     }
@@ -82,8 +79,8 @@ contract ERC20 is PaymentGateway {
      */
     function _gatewayPayment(address sender, address gatewayAdd, uint amount) private {
         _burn(sender, amount);
-        totalBurnedByCommunity[sender] += amount;
-        totalPaymentGatewayBurned[gatewayAdd] += amount;
+        _totalBurnedByCommunity[sender] += amount;
+        _totalPaymentGatewayBurned[gatewayAdd] += amount;
     }
 
     /**
@@ -91,8 +88,8 @@ contract ERC20 is PaymentGateway {
      * emits {BurnEvent} .
      */
     function _burn(address communityAdd, uint amount) private {
-        balance[communityAdd] -= amount;
-        totalSupply -= amount;
+        _balance[communityAdd] -= amount;
+        _totalSupply -= amount;
         emit BurnEvent(communityAdd, amount);
     }
 
@@ -101,7 +98,7 @@ contract ERC20 is PaymentGateway {
      *
      */
     function getTotalSupply() external view returns(uint) {
-        return totalSupply;
+        return _totalSupply;
     }
 
     /**
@@ -109,6 +106,6 @@ contract ERC20 is PaymentGateway {
      * @return uint256, balance of receiver.
      */
     function balanceOf(address tokenOwner) public view returns (uint) {
-        return balance[tokenOwner];
+        return _balance[tokenOwner];
     }
 }

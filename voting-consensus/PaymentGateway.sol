@@ -5,19 +5,17 @@ import "./VotingRemoval.sol";
 
 contract PaymentGateway is VotingRemoval {
     // New payment address is set to true.
-    mapping(address => bool) validGatewayAddress;
+    mapping(address => bool)  private _validGatewayAddress;
 
     // New address is mapped to community.
-    mapping(address => address) gatewayToCommunity;
+    mapping(address => address) private _gatewayToCommunity;
 
-    // All the list of address registered by the given community.
-    mapping(address => address[]) gatewayList;
 
     /**
      * @dev Throw if address is not registered at `validGatewayAddress`.
      */
     modifier isGatewayReg(address gateway) {
-        require(validGatewayAddress[gateway]);
+        require(_validGatewayAddress[gateway]);
         _;
     }
 
@@ -26,7 +24,7 @@ contract PaymentGateway is VotingRemoval {
      * already registered as payment gatement.
      */
     modifier addressValidation(address paymentAddress) {
-        require(!validGatewayAddress[paymentAddress], 'Address already registered as payment gateway.');
+        require(!_validGatewayAddress[paymentAddress], 'Address already registered as payment gateway.');
         require(!checkIfRegistered(paymentAddress), 'Address already registered as community');
         require(!checkIfTrusted(paymentAddress), 'Address already registered as trusted');
         _;
@@ -42,9 +40,8 @@ contract PaymentGateway is VotingRemoval {
         onlyEligible
         addressValidation(gatewayAdd)
     {
-        gatewayToCommunity[gatewayAdd] = msg.sender;
-        validGatewayAddress[gatewayAdd] = true;
-        gatewayList[msg.sender].push(gatewayAdd);
+        _gatewayToCommunity[gatewayAdd] = msg.sender;
+        _validGatewayAddress[gatewayAdd] = true;
     }
 
     /**
@@ -55,7 +52,7 @@ contract PaymentGateway is VotingRemoval {
         onlyEligible
         isGatewayReg(gatewayAdd)
     {
-        validGatewayAddress[gatewayAdd] = false;
+        _validGatewayAddress[gatewayAdd] = false;
     }
 
     /**
@@ -66,28 +63,18 @@ contract PaymentGateway is VotingRemoval {
         view
         returns (bool)
     {
-        return validGatewayAddress[receiver];
+        return _validGatewayAddress[receiver];
     }
 
     /**
-     * @dev Returns length of respective `gatewayList` of given `community`.
+     * @dev Returns community address who registered `payment`.
      */
-    function getGetwayListLength(address community)
-        external
-        view
-        returns (uint256)
-    {
-        return gatewayList[community].length;
-    }
-
-    /**
-     * @dev Returns registered address as payment gateway by `community` by provided `index`.
-     */
-    function accessGatewayList(address community, uint256 index)
+    function whoRegisteredPayment(address payment)
         external
         view
         returns (address)
     {
-        return gatewayList[community][index];
+        return _gatewayToCommunity[payment];
     }
+
 }

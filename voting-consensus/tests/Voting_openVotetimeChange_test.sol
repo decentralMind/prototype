@@ -39,8 +39,8 @@ contract OpenVotingChange {
         Assert.equal(totalVote, 1, 'Total number of vote should be 1 at initial.');
         Assert.equal(voteRequired, 1, 'Vote required should match.');
         Assert.equal(requestedTimeChange, 3, 'Should be supplied value 3.');
-        
+
         Assert.equal(vr.getChangeTimeFrameList(), 1, 'changeTimeFrameList must be update to length of 1.');
-    }
+    }        
 
 }

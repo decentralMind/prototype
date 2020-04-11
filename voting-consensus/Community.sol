@@ -7,33 +7,32 @@ contract Community {
     address public owner;
 
     // No of total community registered.
-    uint public totalCommunity;
+    uint private _totalCommunity;
 
     // No of total community labeled as trusted.
-    uint public trustedCommunity;
+    uint internal _trustedCommunity;
 
     // After 90 days community can be trusted.
-    uint public trustedDate = 7776000;
+    uint private _trustedDate = 7776000;
     
-    // Set limit for how much token can be minted by new community.
-    // Can be set to new amount by owner or through community consensus.
-    // Restriction can be removed after `trustedDate`.
-    uint newCommunityMintAmount = 30000;
+    // Address registration.
+    mapping(address => bool) private _registered;
     
-    mapping(address => bool) registered;
+    // Trusted address.
+    mapping(address => bool) private _isTrusted; 
 
-    mapping(address => bool) isTrusted; 
-
-    mapping(address => uint256) whenToTrust;
+    // Infomration on when community can be trusted.
+    mapping(address => uint256) private _whenToTrust;
      
-    mapping(address => uint) registeredDate;
+    // Community registration date.
+    mapping(address => uint) private _registeredDate;
     
     constructor() public {
       owner = msg.sender;
     }
 
     modifier isRegistered(address community) {
-        require(registered[community] == true, 'Community not registered');
+        require(_registered[community] == true, 'Community not registered');
         _;
     }
 
@@ -45,14 +44,14 @@ contract Community {
     modifier onlyEligible() {
         require(
             owner == msg.sender ||
-                (registered[msg.sender] && isTrusted[msg.sender]), 
+                (_registered[msg.sender] && _isTrusted[msg.sender]), 
                 'Must be owner or registered as trusted'
         );
         _;
     }
 
     modifier isAlreadyTrusted(address registeredCommunity) {
-        require(!isTrusted[registeredCommunity], 'Community already registered');
+        require(!_isTrusted[registeredCommunity], 'Community already registered');
         _;
     }
 
@@ -99,11 +98,11 @@ contract Community {
      * emits a {NewCommunityEvent}.
      */
     function addCommunity(address newCommunity) external onlyEligible {
-        require(!registered[newCommunity], 'Community already registered');
-        registered[newCommunity] = true;
-        whenToTrust[newCommunity] = block.timestamp + trustedDate;
-        registeredDate[newCommunity] = block.timestamp;
-        emit NewCommunityEvent(newCommunity, registeredDate[newCommunity], whenToTrust[newCommunity]);
+        require(!_registered[newCommunity], 'Community already registered');
+        _registered[newCommunity] = true;
+        _whenToTrust[newCommunity] = block.timestamp + _trustedDate;
+        _registeredDate[newCommunity] = block.timestamp;
+        emit NewCommunityEvent(newCommunity, _registeredDate[newCommunity], _whenToTrust[newCommunity]);
     }
 
     /**
@@ -115,10 +114,10 @@ contract Community {
      * emits a {NewTrustedCommunity}
      */
     function addToTrusted(address oldCommunity) external {
-        require(registered[oldCommunity], 'Commuinity is not registered');
-        require(whenToTrust[oldCommunity] <= block.timestamp, 'Community can be only trusted after 90 days');
-        isTrusted[oldCommunity] = true;
-        trustedCommunity ++;
+        require(_registered[oldCommunity], 'Commuinity is not registered');
+        require(_whenToTrust[oldCommunity] <= block.timestamp, 'Community can be only trusted after 90 days');
+        _isTrusted[oldCommunity] = true;
+        _trustedCommunity ++;
         emit NewTrustedCommunity(oldCommunity);
     }
 
@@ -134,8 +133,8 @@ contract Community {
         onlyOwner
         isAlreadyTrusted(registeredCommunity)
     {
-        isTrusted[registeredCommunity] = true;
-        trustedCommunity ++;
+        _isTrusted[registeredCommunity] = true;
+        _trustedCommunity ++;
     }
 
      /**
@@ -147,8 +146,8 @@ contract Community {
     function directlyRemoveCommunity(address oldCommunity) external onlyOwner {
         _removeCommunity(oldCommunity);
         assert(
-            registered[oldCommunity] == false &&
-                isTrusted[oldCommunity] == false
+            _registered[oldCommunity] == false &&
+                _isTrusted[oldCommunity] == false
         );
     }
 
@@ -165,10 +164,10 @@ contract Community {
         internal
         isRegistered(oldCommunity)
     {
-        registered[oldCommunity] = false;
+        _registered[oldCommunity] = false;
 
-        if (isTrusted[oldCommunity]) {
-            isTrusted[oldCommunity] = false;
+        if (_isTrusted[oldCommunity]) {
+            _isTrusted[oldCommunity] = false;
         }
 
         emit CommunityRemovedEvent(oldCommunity);
@@ -182,7 +181,7 @@ contract Community {
      * emits a {NewTrustedDateEvent}
      */
     function setTrustedDate(uint newDate) public onlyOwner {
-        trustedDate = newDate;
+        _trustedDate = newDate;
         emit NewTrustedDateEvent(newDate);
     }
     
@@ -190,28 +189,32 @@ contract Community {
      * @dev Returns true if `community` is regisitered and vice versa.
      */
     function checkIfRegistered(address community) public view returns(bool){
-        return registered[community];
+        return _registered[community];
     }
     
     /**
      * @dev Returns true if `community` is trusted and vice versa.
      */
     function checkIfTrusted(address community) public view returns(bool){
-        return isTrusted[community];
+        return _isTrusted[community];
     }
     
     /**
      * @dev Returns date of the `community` that they can set as trusted.
      */
     function checkWhenToTrusted(address community) external view returns(uint){
-        return whenToTrust[community];
+        return _whenToTrust[community];
     }
     
     /**
      * @dev Returns `trustedDate`.
      */
     function getTrustedDate() external view returns(uint) {
-        return trustedDate;
+        return _trustedDate;
+    }
+
+    function numberOfTrustedCommunities() external view returns(uint) {
+        return _trustedCommunity;
     }
 
   

@@ -53,7 +53,7 @@ contract CommunityTest {
     function comminitiesShouldBeAbleToSetToTrusted() public {
         cmt.directlyTrustedByOwner(acc0);
         Assert.equal(cmt.checkIfTrusted(acc0), true, 'Commuity should be set as trusted.');
-        Assert.equal(cmt.trustedCommunity(), 1, 'Trusted Community should increase');
+        Assert.equal(cmt.numberOfTrustedCommunities(), 1, 'Trusted Community should increase');
     }
     
     function shouldReturnFalseForNonRegisteredCommunity() public {
