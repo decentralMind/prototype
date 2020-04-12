@@ -11,10 +11,7 @@ import "./PaymentGateway.sol";
  **/
 
 contract ERC20 is PaymentGateway {
-    string public name;
-    string public symbol;
-    uint8 public constant decimals = 18;
-
+    
     // Balance mapped to receiver address.
     mapping(address => uint256) private _balance;
 
