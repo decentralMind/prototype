@@ -35,7 +35,7 @@ contract OpenVotingChange {
         Assert.equal(isRemoved, false, "Should be false.");
         Assert.equal(openBy, deployAdd, "Creator address should match.");
 
-        // // +- 5 seconds internval.
+        // // +- 5 seconds interval.
         Assert.greaterThan(
             expiryDate,
             vr.removalTimeFrame() + block.timestamp - 5,

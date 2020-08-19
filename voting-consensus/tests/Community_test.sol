@@ -31,7 +31,7 @@ contract CommunityTest {
         );
     }
 
-    function onwerShouldCorretlyAddCommunity() public {
+    function onwerShouldCorrectlyAddCommunity() public {
         Assert.equal(cmt.checkIfRegistered(acc0), true, "Should return true");
     }
 
@@ -50,7 +50,7 @@ contract CommunityTest {
         );
     }
 
-    function shouldCorrelySetsCommunityTrustedDateForCommunity() public {
+    function shouldCorrectlySetsCommunityTrustedDateForCommunity() public {
         cmt.setTrustedDate(1);
         Assert.equal(
             cmt.getTrustedDate(),
@@ -59,7 +59,7 @@ contract CommunityTest {
         );
     }
 
-    function comminitiesShouldBeAbleToSetToTrusted() public {
+    function communitiesShouldBeAbleToSetToTrusted() public {
         cmt.directlyTrustedByOwner(acc0);
         Assert.equal(
             cmt.checkIfTrusted(acc0),
