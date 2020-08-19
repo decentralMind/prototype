@@ -6,7 +6,7 @@ pragma solidity ^0.5.0;
  */
 contract CommunityERC20 {
     // Batch number is expected to increase monthly basis.
-    // Resistered community can only mint token once in a given batch.
+    // Registered community can only mint token once in a given batch.
     uint256 public batch = 1;
 
     // Each community has own set to record batch number, total and balance of it's receiver.
@@ -25,7 +25,7 @@ contract CommunityERC20 {
     // Get community address with repective index.
     mapping(uint256 => address) getCommunityFromIndex;
 
-    // Balance array records community index and batch numb.
+    // Balance array records community index and batch number.
     // for each reciever address.
     // If receiver has array elements [1, 2] at index 0 of balance that means,
     // it has token created by registered community at index 1(getCommunityFromIndex) during
@@ -40,7 +40,7 @@ contract CommunityERC20 {
     mapping(address => mapping(uint256 => Create)) tokenStructList;
 
     /**
-     * @dev Check if community address is registered. 
+     * @dev Check if community address is registered.
      * @param community registered address.
      */
     modifier isRegistered(address community) {
@@ -66,7 +66,7 @@ contract CommunityERC20 {
     }
 
     /**
-     * @dev Check if community address is registered. 
+     * @dev Reduce 'balance[owner]' length if balance is zero for particular community index.
      * @param owner addres.
      */
     function _reduceBalanceArray(address owner, uint256 reduceNum)
@@ -87,7 +87,7 @@ contract CommunityERC20 {
      * @param getBatch batch number in which token is created by the community.
      * @param sender address.
      * @param receiver address.
-     * @param amount request to be sent to receiver address.
+     * @param amount requested to be sent to receiver address.
      */
     function _balanceShift(
         address community,
@@ -128,7 +128,7 @@ contract CommunityERC20 {
     }
 
     /**
-     * @dev Check if community address is registered. 
+     * @dev Check if community address is registered.
      * @param community registered address..
      */
     function specificBalance(address community, uint256 getBatch, address user)
@@ -266,10 +266,10 @@ contract CommunityERC20 {
     }
 
     /**
-     * @dev If sender 'balance[address]' last index respective to it's 
-     * commuinity address and batch has insufficient balance than the requested
+     * @dev If sender 'balance[address]' last index respective to it's
+     * community address and batch has insufficient balance than the requested
      * transfe amount, 'balance[address]' index needs to be shift in descending order
-     * to get sender token address in different batch or community and transfer 
+     * to get sender token address in different batch or community and transfer
      * to receiver address.
      * @param amount request transfer amount.
      * @param receiver address.
