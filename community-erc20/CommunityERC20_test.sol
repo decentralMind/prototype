@@ -182,7 +182,7 @@ contract CommunityERC20Test {
 
     }
 
-    function shouldPropertlyUpdateBalanceArrayAfterTransfer() public {
+    function shouldProperlyUpdateBalanceArrayAfterTransfer() public {
         cerc.transfer(acc2, 10);
         mainAccIndex = cerc.findCommunityIndex(mainAcc);
         currentBatch = cerc.getCurrentBatch();
